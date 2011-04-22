@@ -53,6 +53,7 @@ public class GpxSaxParser extends Parser {
 			xr.setContentHandler(gpxHandler);
 
 			xr.parse(new InputSource(new StringReader(data)));
+		
 
 		} catch (Exception e) {
 			if (listener != null)

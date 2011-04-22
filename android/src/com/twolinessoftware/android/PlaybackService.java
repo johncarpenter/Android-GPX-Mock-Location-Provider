@@ -46,7 +46,7 @@ public class PlaybackService extends Service implements GpxSaxParserListener {
 
 	private NotificationManager mNM;
 
-	private static final String LOG = PlaybackService.class.getCanonicalName();
+	private static final String LOG = PlaybackService.class.getSimpleName();
 
 	private static final int NOTIFICATION = 1;
 
@@ -62,21 +62,29 @@ public class PlaybackService extends Service implements GpxSaxParserListener {
     private static final String PROVIDER_NAME = LocationManager.GPS_PROVIDER;
 	
 	private final IPlaybackService.Stub mBinder = new IPlaybackService.Stub() {
-		
+
+
 		@Override
 		public void startService(String file) throws RemoteException {
 			
 			broadcastStateChange(RUNNING);
 
 			loadGpxFile(file);
-			
+						
 		}
 
 		@Override
 		public void stopService() throws RemoteException {
 			mLocationManager.removeTestProvider(PROVIDER_NAME);
+			
 			queue.reset();
+			
 			broadcastStateChange(STOPPED);
+			
+			cancelExistingTaskIfNecessary(); 
+			
+	    	onGpsPlaybackStopped();
+			
 			stopSelf(); 
 		}
 
@@ -89,8 +97,6 @@ public class PlaybackService extends Service implements GpxSaxParserListener {
 
 	private LocationManager mLocationManager;
 
-	private String filepath;
-
 	private long startTimeOffset;
 
 	private long firstGpsTime;
@@ -98,6 +104,10 @@ public class PlaybackService extends Service implements GpxSaxParserListener {
 	private int state;
 
 	private SendLocationWorkerQueue queue;
+	
+	private boolean processing;
+
+	private ReadFileTask task;
 
 	@Override
     public IBinder onBind(Intent intent) {
@@ -115,6 +125,10 @@ public class PlaybackService extends Service implements GpxSaxParserListener {
         queue.start(); 
        
         broadcastStateChange(STOPPED); 
+        
+        setupTestProvider();
+        
+        processing = false; 
 
     }
 
@@ -122,10 +136,7 @@ public class PlaybackService extends Service implements GpxSaxParserListener {
     public int onStartCommand(Intent intent, int flags, int startId) {
      
     	Log.d(LOG,"Starting Playback Service");	
-    
-    	//disableGpsProvider(); 
-		setupTestProvider();
-      	
+          	
     	// We want this service to continue running until it is explicitly
         // stopped, so return sticky.
         return START_STICKY;
@@ -135,17 +146,28 @@ public class PlaybackService extends Service implements GpxSaxParserListener {
     public void onDestroy() {
     	Log.d(LOG,"Stopping Playback Service");
     	
-    	onGpsPlaybackStopped();
+    }
+    
+    private void cancelExistingTaskIfNecessary(){
+		if(task != null){
+			try{
+				task.cancel(true);
+			}catch(Exception e){
+				Log.e(LOG, "Unable to cancel playback task. May already be stopped");
+			}
+		}
     }
     
     private void loadGpxFile(String file){
     	if(file != null){
-			
+    		
     		broadcastStatus(GpsPlaybackBroadcastReceiver.Status.fileLoadStarted);
     		
-    		ReadFileTask task = new ReadFileTask(file);
-    		task.execute(null);
+			cancelExistingTaskIfNecessary(); 
     		
+    		task = new ReadFileTask(file);
+    		task.execute(null);
+    	    		
     		 // Display a notification about us starting.  We put an icon in the status bar.
             showNotification();	
 		}
@@ -211,7 +233,7 @@ public class PlaybackService extends Service implements GpxSaxParserListener {
         mNM.notify(NOTIFICATION, notification);
     }
     
-    private void loadFile(String file){
+    private String loadFile(String file){
     	
     	try{
  		   File f = new File(file);
@@ -229,14 +251,13 @@ public class PlaybackService extends Service implements GpxSaxParserListener {
  		  
  		  Logger.d(LOG,"Finished reading in file");
  	 		
- 		  queueGpxPositions(xml.toString());
- 		    
- 		   Logger.d(LOG,"Finished parsing in file");
+ 		  return xml.toString();  
+ 		   
  		} catch (Exception e) {
  			broadcastError("Error in the GPX file, unable to read it");
  		}
  		 		
- 		
+ 		return null;
     }
    
 
@@ -250,12 +271,13 @@ public class PlaybackService extends Service implements GpxSaxParserListener {
 	public void onGpxPoint(GpxTrackPoint item) {
 		
 		long delay = System.currentTimeMillis() + 2000; // ms until the point should be displayed
+
+		long gpsPointTime = 0; 
 		
 		// Calculate the delay
 		if(item.getTime() != null){
 			SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 			
-			long gpsPointTime = 0; 
 			try {
 				Date gpsDate = format.parse(item.getTime());
 				gpsPointTime = gpsDate.getTime(); 
@@ -276,11 +298,16 @@ public class PlaybackService extends Service implements GpxSaxParserListener {
 		
 		
 		pointList.add(item);
-		
-		Log.d(LOG,"Sending Point in:"+(delay-System.currentTimeMillis())+"ms");
-		
-		SendLocationWorker worker = new SendLocationWorker(mLocationManager,item,PROVIDER_NAME, delay);
-		queue.addToQueue(worker);
+		if(state == RUNNING){
+			if(delay > 0){
+				Log.d(LOG,"Sending Point in:"+(delay-System.currentTimeMillis())+"ms");
+				
+				SendLocationWorker worker = new SendLocationWorker(mLocationManager,item,PROVIDER_NAME, delay);
+				queue.addToQueue(worker);
+			}else{
+				Log.e(LOG,"Invalid Time at Point:"+gpsPointTime+" delay from current time:"+delay);	
+			}
+		}
 		
 	}
 
@@ -315,7 +342,7 @@ public class PlaybackService extends Service implements GpxSaxParserListener {
 		sendBroadcast(i);	
 	}
 	
-	private class ReadFileTask extends AsyncTask<Void,Void,Void>{
+	private class ReadFileTask extends AsyncTask<Void,Integer,Void>{
 
 		private String file; 
 		
@@ -326,14 +353,41 @@ public class PlaybackService extends Service implements GpxSaxParserListener {
 
 		@Override
 		protected void onPostExecute(Void result) {
-		    broadcastStatus(GpsPlaybackBroadcastReceiver.Status.fileLoadfinished);
+			broadcastStatus(GpsPlaybackBroadcastReceiver.Status.fileLoadfinished); 
 		}
 
 		@Override
 		protected Void doInBackground(Void... arg0) {
-			loadFile(file); 
+			
+			// Reset the existing values
+    		firstGpsTime = 0;
+			
+			startTimeOffset = 0;
+			
+			String xml = loadFile(file);
+			
+			publishProgress(1);
+			
+	 		queueGpxPositions(xml);
+			
 			return null; 
+		}
+
+		@Override
+		protected void onProgressUpdate(Integer... progress) {
+			switch(progress[0]){
+				case 1: 
+					 broadcastStatus(GpsPlaybackBroadcastReceiver.Status.fileLoadfinished);
+					 break;
+			}
+				
 		}	
+		
+		
+		
+		
 	}
+	
+	
 	
 }

@@ -15,11 +15,10 @@
  */
 package com.twolinessoftware.android;
 
-import com.twolinessoftware.android.framework.service.comms.gpx.GpxTrackPoint;
-
 public interface GpsPlaybackListener {
 	void onFileLoadStarted();
 	void onFileLoadFinished();
 	void onStatusChange(int newStatus);
 	void onFileError(String message);
+	
 }
