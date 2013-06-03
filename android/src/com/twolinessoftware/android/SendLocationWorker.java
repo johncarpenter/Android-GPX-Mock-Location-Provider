@@ -49,15 +49,20 @@ public class SendLocationWorker extends Worker {
 
 	@Override
 	public void run() {
-		sendLocation(point.getLat(), point.getLon());
+		sendLocation(point);
 	}
 
-	private void sendLocation(final double latitude, final double longitude) {
+	private void sendLocation(GpxTrackPoint point) {
 
 		Location loc = new Location(providerName);
-		loc.setLatitude(latitude);
-		loc.setLongitude(longitude);
-		loc.setTime(sendTime);
+		loc.setLatitude(point.getLat());
+		loc.setLongitude(point.getLon());
+		loc.setTime(System.currentTimeMillis());
+        loc.setBearing((float)point.getHeading());
+        loc.setAccuracy(1.0f);
+        loc.setSpeed((float)point.getSpeed());
+        loc.setAltitude(100.0);
+
 		Log.d("SendLocation", "Sending update for " + providerName);
 		mLocationManager.setTestProviderLocation(providerName, loc);
 

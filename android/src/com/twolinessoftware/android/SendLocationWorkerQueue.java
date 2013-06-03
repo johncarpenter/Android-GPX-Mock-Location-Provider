@@ -57,26 +57,27 @@ public class SendLocationWorkerQueue {
 
 	private class WorkerThread extends Thread {
 
+        private long lastSendTime;
+        private final static long TIME_BETWEEN_SENDS = 1000;
+
 		public void run() {
 			while (running) {
 
 				if (queue.size() > 0) {
-					long timeUntilNext = queue.peek().getSendTime()
-							- System.currentTimeMillis();
 
-					if (timeUntilNext < 10) {
-						SendLocationWorker worker = queue.poll();
-						if (worker != null)
-							worker.run();
-					} else {
-						synchronized (lock) {
-							try {
-								lock.wait(timeUntilNext);
-							} catch (InterruptedException e) {
-								e.printStackTrace();
-							}
-						}
-					}
+                    SendLocationWorker worker = queue.pop();
+
+                   worker.run();
+                    synchronized (lock) {
+                        try {
+                            lock.wait(TIME_BETWEEN_SENDS);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+
+
 				}
 			}
 		}

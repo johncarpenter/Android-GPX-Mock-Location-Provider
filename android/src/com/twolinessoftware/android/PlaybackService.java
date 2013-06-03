@@ -15,15 +15,6 @@
  */
 package com.twolinessoftware.android;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -36,11 +27,20 @@ import android.os.AsyncTask;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
-
 import com.twolinessoftware.android.framework.service.comms.gpx.GpxSaxParser;
 import com.twolinessoftware.android.framework.service.comms.gpx.GpxSaxParserListener;
 import com.twolinessoftware.android.framework.service.comms.gpx.GpxTrackPoint;
 import com.twolinessoftware.android.framework.util.Logger;
+import com.vividsolutions.jts.geom.Coordinate;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 
 public class PlaybackService extends Service implements GpxSaxParserListener {
 
@@ -60,6 +60,8 @@ public class PlaybackService extends Service implements GpxSaxParserListener {
 	public static final int STOPPED = 1;
 	
     private static final String PROVIDER_NAME = LocationManager.GPS_PROVIDER;
+
+    private GpxTrackPoint lastPoint;
 	
 	private final IPlaybackService.Stub mBinder = new IPlaybackService.Stub() {
 
@@ -166,7 +168,7 @@ public class PlaybackService extends Service implements GpxSaxParserListener {
 			cancelExistingTaskIfNecessary(); 
     		
     		task = new ReadFileTask(file);
-    		task.execute(null);
+    		task.execute(null, null);
     	    		
     		 // Display a notification about us starting.  We put an icon in the status bar.
             showNotification();	
@@ -295,7 +297,19 @@ public class PlaybackService extends Service implements GpxSaxParserListener {
 			
 			delay = (gpsPointTime - firstGpsTime) + startTimeOffset;
 		}
-		
+
+        if (lastPoint != null)
+        {
+            item.setHeading(calculateHeadingFromPreviousPoint(lastPoint, item));
+            item.setSpeed(calculateSpeedFromPreviousPoint(lastPoint, item));
+        }
+        else
+        {
+            item.setHeading(0.0);
+            item.setSpeed(15.0);
+        }
+
+        lastPoint = item;
 		
 		pointList.add(item);
 		if(state == RUNNING){
@@ -310,6 +324,23 @@ public class PlaybackService extends Service implements GpxSaxParserListener {
 		}
 		
 	}
+
+    private double calculateHeadingFromPreviousPoint(GpxTrackPoint currentPoint, GpxTrackPoint lastPoint)
+    {
+
+        double angleBetweenPoints = Math.atan2((lastPoint.getLon() - currentPoint.getLon()), (lastPoint.getLat() - currentPoint.getLat()));
+        return Math.toDegrees(angleBetweenPoints);
+    }
+
+    private double calculateSpeedFromPreviousPoint(GpxTrackPoint currentPoint, GpxTrackPoint lastPoint)
+    {
+
+        Coordinate startCoordinate = new Coordinate(lastPoint.getLon(), lastPoint.getLat());
+        Coordinate endCoordinate = new Coordinate(currentPoint.getLon(), currentPoint.getLat());
+        double distance = startCoordinate.distance(endCoordinate) * 100000;
+        return distance;
+
+    }
 
 	@Override
 	public void onGpxStart() {

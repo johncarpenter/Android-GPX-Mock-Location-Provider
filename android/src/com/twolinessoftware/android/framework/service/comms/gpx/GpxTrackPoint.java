@@ -26,6 +26,17 @@ public class GpxTrackPoint implements Serializable {
 	private String sat;
 	private double lat;
 	private double lon;
+    private double heading;
+
+    public double getSpeed() {
+        return speed;
+    }
+
+    public void setSpeed(double speed) {
+        this.speed = speed;
+    }
+
+    private double speed;
 
 	public float getEle() {
 		return ele;
@@ -74,5 +85,15 @@ public class GpxTrackPoint implements Serializable {
 	public void setLon(double lon) {
 		this.lon = lon;
 	}
+
+    public void setHeading(double heading)
+    {
+        this.heading = heading;
+    }
+
+    public double getHeading()
+    {
+        return heading;
+    }
 
 }
