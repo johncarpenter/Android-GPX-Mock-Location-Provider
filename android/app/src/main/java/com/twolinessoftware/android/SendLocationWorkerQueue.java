@@ -21,85 +21,85 @@ import java.util.LinkedList;
 
 public class SendLocationWorkerQueue {
 
-	private LinkedList<SendLocationWorker> queue;
-	private boolean running;
-	private WorkerThread thread;
+    private LinkedList<SendLocationWorker> queue;
+    private boolean running;
+    private WorkerThread thread;
 
-	private Object lock = new Object();
+    private Object lock = new Object();
 
-	public SendLocationWorkerQueue() {
-		queue = new LinkedList<SendLocationWorker>();
-		running = false;
-	}
+    public SendLocationWorkerQueue() {
+        queue = new LinkedList<SendLocationWorker>();
+        running = false;
+    }
 
 
-	public void addToQueue(SendLocationWorker worker) {
-		synchronized (queue) {
-			queue.addLast(worker);
-		}
+    public void addToQueue(SendLocationWorker worker) {
+        synchronized (queue) {
+            queue.addLast(worker);
+        }
 
-	}
+    }
 
-	public synchronized void start(long delayTimeOnReplay) {
-		running = true;
-		thread = new WorkerThread(delayTimeOnReplay);
-		thread.start();
-	}
+    public synchronized void start(long delayTimeOnReplay) {
+        running = true;
+        thread = new WorkerThread(delayTimeOnReplay);
+        thread.start();
+    }
 
-	public synchronized void stop() {
-		/*
+    public synchronized void stop() {
+        /*
 		 * synchronized(lock){ lock.notify(); }
 		 */
-		running = false;
-	}
+        running = false;
+    }
 
-	public void reset() {
-		stop();
-		queue = new LinkedList<SendLocationWorker>();
+    public void reset() {
+        stop();
+        queue = new LinkedList<SendLocationWorker>();
 
-		stopThread();
-	}
+        stopThread();
+    }
 
-	public void stopThread(){
-		if(thread != null){
-			try {
-				thread.interrupt();
-			} catch (Exception e) {
-				Logger.i("SendLocationWorkerQueue.stopThread() - exception","" + e.getMessage());
-			}
-			this.thread = null;
-		}
-	}
+    public void stopThread() {
+        if (thread != null) {
+            try {
+                thread.interrupt();
+            } catch (Exception e) {
+                Logger.i("SendLocationWorkerQueue.stopThread() - exception", "" + e.getMessage());
+            }
+            this.thread = null;
+        }
+    }
 
-	private class WorkerThread extends Thread {
+    private class WorkerThread extends Thread {
 
-		private long TIME_BETWEEN_SENDS = 1000; // milliseconds
+        private long TIME_BETWEEN_SENDS = 1000; // milliseconds
 
-		WorkerThread(long delayTimeOnReplay) {
-			TIME_BETWEEN_SENDS = delayTimeOnReplay;
-		}
+        WorkerThread(long delayTimeOnReplay) {
+            TIME_BETWEEN_SENDS = delayTimeOnReplay;
+        }
 
-		public void run() {
-			while (running) {
+        public void run() {
+            while (running) {
 
-				if (queue.size() > 0) {
+                if (queue.size() > 0) {
 
                     SendLocationWorker worker = queue.pop();
 
-					synchronized (lock) {
-						try {
-							lock.wait(TIME_BETWEEN_SENDS);
+                    synchronized (lock) {
+                        try {
+                            lock.wait(TIME_BETWEEN_SENDS);
 
-							Logger.i("SendLocationWorkerQueue.running - TIME_BETWEEN_SENDS : " + TIME_BETWEEN_SENDS, " - sent at time : " + System.currentTimeMillis());
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-					}
-					// Executing each worker in the current thread. Multiple threads NOT created.
-                   worker.run();
-				}
-			}
-		}
-	}
+                            Logger.i("SendLocationWorkerQueue.running - TIME_BETWEEN_SENDS : " + TIME_BETWEEN_SENDS, " - sent at time : " + System.currentTimeMillis());
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    // Executing each worker in the current thread. Multiple threads NOT created.
+                    worker.run();
+                }
+            }
+        }
+    }
 
 }
