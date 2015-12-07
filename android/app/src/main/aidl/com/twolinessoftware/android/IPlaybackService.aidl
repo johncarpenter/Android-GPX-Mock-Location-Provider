@@ -18,7 +18,6 @@ package com.twolinessoftware.android;
 interface IPlaybackService{
 
 	void startService(String filepath);
-	//void startService(String filepath, String delayTimeOnReplay);
 	
 	void stopService();
 	
