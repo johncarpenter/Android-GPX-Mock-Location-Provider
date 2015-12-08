@@ -2,10 +2,12 @@ This open source Android application allows you to stream GPX files through the 
 
 Getting Started
 ===============
-
-The application requires the OI File Manager Intents application to be installed. You can download it from here: 
-
-https://market.android.com/details?id=org.openintents.filemanager
+1.	Install "OI File Manager" on android device. 
+		https://market.android.com/details?id=org.openintents.filemanager
+2.	Enable "mock locations" on Android device.
+		Settings > Developer Options > Allow Mock Locations
+3.	Install AndroidMockGpx application.
+4.	Play gpx/gps file.
 
 
 Report Issues/Bugs
