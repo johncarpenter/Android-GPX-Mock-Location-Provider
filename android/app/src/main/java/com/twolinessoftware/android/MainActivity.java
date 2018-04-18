@@ -78,16 +78,6 @@ public class MainActivity extends Activity implements GpsPlaybackListener {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 
-		// test that mock locations are allowed so a more descriptive error
-		// message can be logged
-		if (Settings.Secure.getInt(getContentResolver(),
-				Settings.Secure.ALLOW_MOCK_LOCATION, 0) == 0) {
-			Toast.makeText(this, "MockLocations needs to be enabled",
-					Toast.LENGTH_SHORT).show();
-			finish();
-
-		}
-
 		mEditText = (EditText) findViewById(R.id.file_path);
 
 		TextView mLabelEditText = (TextView) findViewById(R.id.label_edit_text_delay);
@@ -125,7 +115,7 @@ public class MainActivity extends Activity implements GpsPlaybackListener {
 		} catch (Exception ie) {
 		}
 
-		super.onPause();
+		super.onStop();
 
 	}
 

@@ -26,6 +26,7 @@ import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import com.twolinessoftware.android.framework.service.comms.gpx.GpxSaxParser;
@@ -46,6 +47,8 @@ import java.util.Date;
 public class PlaybackService extends Service implements GpxSaxParserListener {
 
     private NotificationManager mNM;
+
+    private static final String NOTIFICATION_CHANNEL_ID_DEFAULT = "default";
 
     private static final String LOG = PlaybackService.class.getSimpleName();
 
@@ -238,16 +241,17 @@ public class PlaybackService extends Service implements GpxSaxParserListener {
         // In this sample, we'll use the same text for the ticker and the expanded notification
         CharSequence text = "GPX Playback Running";
 
-        // Set the icon, scrolling text and timestamp
-        Notification notification = new Notification(R.drawable.ic_playback_running, text,
-                System.currentTimeMillis());
-
         // The PendingIntent to launch our activity if the user selects this notification
         PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
                 new Intent(this, MainActivity.class), 0);
 
-        // Set the info for the views that show in the notification panel.
-        notification.setLatestEventInfo(this, "GPX Playback Manager", text, contentIntent);
+        final Notification notification = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID_DEFAULT)
+                .setSmallIcon(R.drawable.ic_playback_running)
+                .setContentText(text)
+                .setWhen(System.currentTimeMillis())
+                .setContentIntent(contentIntent)
+                .setContentTitle("GPX Playback Manager")
+                .build();
 
         // Send the notification.
         mNM.notify(NOTIFICATION, notification);
