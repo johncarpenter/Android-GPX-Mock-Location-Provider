@@ -44,11 +44,45 @@
 			android:layout_height="wrap_content"
 			android:layout_toRightOf="@+id/label_edit_text_delay"
 			android:imeOptions="actionNext"
-			android:inputType="number">
+			android:inputType="number"
+			android:text="2000">
+
 			<requestFocus />
 		</EditText>
 
 	</LinearLayout>
+
+	<RadioGroup
+		android:id="@+id/radioGroupDelay"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:orientation="horizontal">
+
+		<RadioButton
+			android:id="@+id/radioButton"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:checked="true"
+			android:text="1000" />
+
+		<RadioButton
+			android:id="@+id/radioButton_1x"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="1500" />
+
+		<RadioButton
+			android:id="@+id/radioButton_2x"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="2000" />
+
+		<RadioButton
+			android:id="@+id/radioButton_3x"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="3000" />
+	</RadioGroup>
 
 	<Button android:id="@+id/start"
 		android:onClick="onClickStart"

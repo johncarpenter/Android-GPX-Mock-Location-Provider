@@ -35,6 +35,8 @@ import android.provider.Settings;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -57,8 +59,9 @@ public class MainActivity extends Activity implements GpsPlaybackListener {
     private ServiceConnection connection;
     private IPlaybackService service;
     private EditText mEditText;
-
     private EditText mEditTextDelay;
+    private RadioGroup mRadioGroupDelay;
+    private RadioButton mRadioButtonChecked;
 
     private String filepath;
 
@@ -81,7 +84,7 @@ public class MainActivity extends Activity implements GpsPlaybackListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
-        mEditText = (EditText) findViewById(R.id.file_path);
+        mEditText = findViewById(R.id.file_path);
 
         TextView mLabelEditText = (TextView) findViewById(R.id.label_edit_text_delay);
         mLabelEditText.setText("Input Playback Delay (milliseconds): ");
@@ -89,7 +92,7 @@ public class MainActivity extends Activity implements GpsPlaybackListener {
         mLabelEditText.setTextColor(Color.WHITE);
 
 
-        mEditTextDelay = (EditText) findViewById(R.id.editTextDelay);
+        mEditTextDelay = findViewById(R.id.editTextDelay);
 
         mEditTextDelay.setOnFocusChangeListener(new View.OnFocusChangeListener() {
 
@@ -97,6 +100,17 @@ public class MainActivity extends Activity implements GpsPlaybackListener {
                 if (!hasFocus) {
                     delayTimeOnReplay = mEditTextDelay.getText().toString();
                 }
+            }
+        });
+
+        mRadioGroupDelay = findViewById(R.id.radioGroupDelay);
+        mRadioGroupDelay.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup radioGroup, int i) {
+                int selectId = radioGroup.getCheckedRadioButtonId();
+                mRadioButtonChecked = findViewById(selectId);
+                delayTimeOnReplay = mRadioButtonChecked.getText().toString();
+                mEditTextDelay.setText(delayTimeOnReplay);
             }
         });
     }
