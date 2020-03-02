@@ -12,5 +12,8 @@
     
     <string name="please_wait">Please Wait</string>
     <string name="loading_file">Loading GPX File</string>
-    
+    <string name="warning">Warning</string>
+    <string name="message_allow_mock_location">Please allow mock location !</string>
+    <string name="ok">Ok</string>
+
 </resources>
