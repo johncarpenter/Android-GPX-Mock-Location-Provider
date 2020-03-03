@@ -14,6 +14,8 @@
     <string name="loading_file">Loading GPX File</string>
     <string name="warning">Warning</string>
     <string name="message_allow_mock_location">Please allow mock location !</string>
+    <string name="require_permission_app_settings">You must approve all permissions in the app settings.</string>
+    <string name="require_permission">%1$s are required to in order to provide application features.</string>
     <string name="ok">Ok</string>
 
 </resources>

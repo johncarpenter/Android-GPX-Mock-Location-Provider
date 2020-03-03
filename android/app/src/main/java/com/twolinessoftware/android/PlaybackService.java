@@ -26,7 +26,7 @@ import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.support.v4.app.NotificationCompat;
+import androidx.core.app.NotificationCompat;
 import android.util.Log;
 
 import com.twolinessoftware.android.framework.service.comms.gpx.GpxSaxParser;
@@ -75,11 +75,13 @@ public class PlaybackService extends Service implements GpxSaxParserListener {
 
             loadGpxFile(file);
 
+            setupTestProvider();
+
         }
 
         @Override
         public void stopService() throws RemoteException {
-            mLocationManager.removeTestProvider(PROVIDER_NAME);
+            //mLocationManager.removeTestProvider(PROVIDER_NAME);
 
             queue.reset();
 
@@ -129,7 +131,7 @@ public class PlaybackService extends Service implements GpxSaxParserListener {
 
         broadcastStateChange(STOPPED);
 
-        setupTestProvider();
+        //setupTestProvider();
 
         processing = false;
 

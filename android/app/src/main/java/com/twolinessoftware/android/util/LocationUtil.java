@@ -1,8 +1,10 @@
-package com.twolinessoftware.android;
+package com.twolinessoftware.android.util;
 
 import android.app.AppOpsManager;
 import android.content.Context;
 import android.os.Build;
+
+import com.twolinessoftware.android.BuildConfig;
 
 public class LocationUtil {
 

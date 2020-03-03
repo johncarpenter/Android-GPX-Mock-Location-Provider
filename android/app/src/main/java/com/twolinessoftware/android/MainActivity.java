@@ -15,8 +15,8 @@
  */
 package com.twolinessoftware.android;
 
+import android.Manifest;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
@@ -33,6 +33,7 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.provider.Settings;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioButton;
@@ -40,7 +41,15 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.twolinessoftware.android.framework.util.Logger;
+import com.twolinessoftware.android.util.LocationUtil;
+import com.twolinessoftware.android.util.PermissionUtil;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -49,10 +58,17 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-public class MainActivity extends Activity implements GpsPlaybackListener {
+public class MainActivity extends AppCompatActivity implements GpsPlaybackListener {
+
+    private String[] APP_PERMISSIONS = {
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_EXTERNAL_STORAGE};
 
     private static final int REQUEST_FILE = 1;
     private static final int REQUEST_MOCK_LOCATION = 2;
+    private static final int REQUEST_PERMISSION_APP_SETTING = 3;
+    private static final int REQUEST_APP_PERMISSION = 4;
 
     private static final String LOGNAME = "SimulatedGPSProvider.MainActivity";
 
@@ -94,25 +110,30 @@ public class MainActivity extends Activity implements GpsPlaybackListener {
 
         mEditTextDelay = findViewById(R.id.editTextDelay);
 
-        mEditTextDelay.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-
-            public void onFocusChange(View v, boolean hasFocus) {
-                if (!hasFocus) {
-                    delayTimeOnReplay = mEditTextDelay.getText().toString();
-                }
+        mEditTextDelay.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus) {
+                delayTimeOnReplay = mEditTextDelay.getText().toString();
             }
+        });
+
+        mEditText.setFocusable(false);
+        mEditText.setOnFocusChangeListener((view, b) -> {
+            if (b)
+                hideKeyboard(view, MainActivity.this);
         });
 
         mRadioGroupDelay = findViewById(R.id.radioGroupDelay);
-        mRadioGroupDelay.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup radioGroup, int i) {
-                int selectId = radioGroup.getCheckedRadioButtonId();
-                mRadioButtonChecked = findViewById(selectId);
-                delayTimeOnReplay = mRadioButtonChecked.getText().toString();
-                mEditTextDelay.setText(delayTimeOnReplay);
-            }
+        mRadioGroupDelay.setOnCheckedChangeListener((radioGroup, i) -> {
+            int selectId = radioGroup.getCheckedRadioButtonId();
+            mRadioButtonChecked = findViewById(selectId);
+            delayTimeOnReplay = mRadioButtonChecked.getText().toString();
+            mEditTextDelay.setText(delayTimeOnReplay);
         });
+
+
+        if (!hasPermissions(APP_PERMISSIONS)) {
+            requestAppPermission();
+        }
     }
 
     @Override
@@ -154,12 +175,7 @@ public class MainActivity extends Activity implements GpsPlaybackListener {
                 getString(R.string.please_wait),
                 getString(R.string.loading_file), true);
         progressDialog.setCancelable(true);
-        progressDialog.setOnCancelListener(new OnCancelListener() {
-            @Override
-            public void onCancel(DialogInterface dialog) {
-                dialog.dismiss();
-            }
-        });
+        progressDialog.setOnCancelListener(dialog -> dialog.dismiss());
     }
 
     private void bindStatusListener() {
@@ -318,15 +334,21 @@ public class MainActivity extends Activity implements GpsPlaybackListener {
                         String filePath = fileUri.getPath();
                         if (filePath != null) {
                             mEditText.setText(filePath);
+                            hideKeyboard(mEditText, this);
                             this.filepath = filePath;
                         }
                     }
                 }
                 break;
             case REQUEST_MOCK_LOCATION:
-            	/*if(resultCode == RESULT_OK) */
-                if(!LocationUtil.isMockLocationEnabled(this)) {
+                /*if(resultCode == RESULT_OK) */
+                if (!LocationUtil.isMockLocationEnabled(this)) {
                     showMockLocationSettings();
+                }
+                break;
+            case REQUEST_PERMISSION_APP_SETTING:
+                if (!hasPermissions(APP_PERMISSIONS)) {
+                    requestAppPermission();
                 }
                 break;
         }
@@ -432,5 +454,92 @@ public class MainActivity extends Activity implements GpsPlaybackListener {
                 .setCancelable(false)
                 .create();
         alertDialog.show();
+    }
+
+    public static void hideKeyboard(View view, Activity context) {
+        InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(view.getApplicationWindowToken(), 0);
+    }
+
+    // ------------------------------ Permissions ------------------------------
+    protected boolean hasPermission(String permission) {
+        return PermissionUtil.hasPermission(this, permission);
+    }
+
+    protected boolean hasPermissions(String[] permissions) {
+        return PermissionUtil.hasPermissions(this, permissions);
+    }
+
+    protected boolean couldShowRequestPermissionRationales(String[] permissions) {
+        return PermissionUtil.couldShowRequestPermissionRationales(this, permissions);
+    }
+
+    protected boolean verifyPermissions(int[] grantResults) {
+        return PermissionUtil.verifyPermissions(grantResults);
+    }
+
+    protected void requestAppPermission() {
+        if (!hasPermissions(APP_PERMISSIONS)) {
+            if (couldShowRequestPermissionRationales(APP_PERMISSIONS)) {
+                showDialogExplainStoragePermission();
+            } else {
+                ActivityCompat.requestPermissions(this, APP_PERMISSIONS, REQUEST_APP_PERMISSION);
+            }
+        }
+    }
+
+    private void showDialogExplainStoragePermission() {
+        StringBuilder appPermissions = new StringBuilder("");
+        for (String permission : APP_PERMISSIONS) {
+            appPermissions.append(PermissionUtil.manifestPermission2String(permission)).append(", ");
+        }
+//        Snackbar snackbar = Snackbar.make(getWindow().getDecorView().findViewById(android.R.id.content), String.format(getString(R.string.require_permission), appPermissions), Snackbar.LENGTH_INDEFINITE)
+//                .setAction("ok", view -> ActivityCompat.requestPermissions(MainActivity.this, APP_PERMISSIONS, REQUEST_APP_PERMISSION));
+//        snackbar.show();
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setMessage(String.format(getString(R.string.require_permission), appPermissions))
+                .setPositiveButton(getString(R.string.ok), (dialogInterface, i) -> {
+                    dialogInterface.dismiss();
+                    ActivityCompat.requestPermissions(MainActivity.this, APP_PERMISSIONS, REQUEST_APP_PERMISSION);
+                })
+                .setCancelable(false)
+                .create();
+        dialog.show();
+    }
+
+    protected void showDialogSettings() {
+//        Snackbar snackbar = Snackbar.make(this.findViewById(android.R.id.content), getString(R.string.require_permission_app_settings), Snackbar.LENGTH_INDEFINITE)
+//                .setAction("ok", view -> openAppDetailsSetting());
+//        snackbar.show();
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setMessage(R.string.require_permission_app_settings)
+                .setPositiveButton(R.string.ok, (dialogInterface, i) -> {
+                    dialogInterface.dismiss();
+                    openAppDetailsSetting();
+                })
+                .setCancelable(false)
+                .create();
+        dialog.show();
+    }
+
+    private void openAppDetailsSetting() {
+        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        intent.setData(Uri.fromParts("package", getPackageName(), null));
+        startActivityForResult(intent, REQUEST_PERMISSION_APP_SETTING);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_APP_PERMISSION) {
+            if (verifyPermissions(grantResults)) {
+
+            } else if (couldShowRequestPermissionRationales(APP_PERMISSIONS)) {
+                requestAppPermission();
+            } else {
+                showDialogSettings();
+            }
+        }
     }
 }

@@ -45,7 +45,7 @@
 			android:layout_toRightOf="@+id/label_edit_text_delay"
 			android:imeOptions="actionNext"
 			android:inputType="number"
-			android:text="2000">
+			android:text="1000">
 
 			<requestFocus />
 		</EditText>
