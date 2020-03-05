@@ -22,11 +22,9 @@ import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -36,9 +34,9 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -58,7 +56,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-public class MainActivity extends AppCompatActivity implements GpsPlaybackListener {
+public class MainActivity extends AppCompatActivity implements GpsPlaybackListener, View.OnClickListener{
 
     private String[] APP_PERMISSIONS = {
             Manifest.permission.ACCESS_FINE_LOCATION,
@@ -75,9 +73,14 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
     private ServiceConnection connection;
     private IPlaybackService service;
     private EditText mEditText;
+    private ImageView mImageViewFileManager;
     private EditText mEditTextDelay;
     private RadioGroup mRadioGroupDelay;
     private RadioButton mRadioButtonChecked;
+    private Button mButtonStart;
+    private Button mButtonStop;
+    private Button mButtonPause;
+    private Button mButtonResume;
 
     private String filepath;
 
@@ -101,14 +104,23 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
         setContentView(R.layout.main);
 
         mEditText = findViewById(R.id.file_path);
-
-        TextView mLabelEditText = (TextView) findViewById(R.id.label_edit_text_delay);
-        mLabelEditText.setText("Input Playback Delay (milliseconds): ");
-        mLabelEditText.setTextSize(17);
-        mLabelEditText.setTextColor(Color.WHITE);
-
-
+        mImageViewFileManager = findViewById(R.id.file_manager);
         mEditTextDelay = findViewById(R.id.editTextDelay);
+        mRadioGroupDelay = findViewById(R.id.radioGroupDelay);
+        mButtonStart = findViewById(R.id.start);
+        mButtonStop = findViewById(R.id.stop);
+        mButtonPause = findViewById(R.id.pause);
+        mButtonResume = findViewById(R.id.resume);
+
+        initHandler();
+    }
+
+    private void initHandler() {
+        mImageViewFileManager.setOnClickListener(this);
+        mButtonStart.setOnClickListener(this);
+        mButtonStop.setOnClickListener(this);
+        mButtonPause.setOnClickListener(this);
+        mButtonResume.setOnClickListener(this);
 
         mEditTextDelay.setOnFocusChangeListener((v, hasFocus) -> {
             if (!hasFocus) {
@@ -122,14 +134,12 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
                 hideKeyboard(view, MainActivity.this);
         });
 
-        mRadioGroupDelay = findViewById(R.id.radioGroupDelay);
         mRadioGroupDelay.setOnCheckedChangeListener((radioGroup, i) -> {
             int selectId = radioGroup.getCheckedRadioButtonId();
             mRadioButtonChecked = findViewById(selectId);
             delayTimeOnReplay = mRadioButtonChecked.getText().toString();
             mEditTextDelay.setText(delayTimeOnReplay);
         });
-
 
         if (!hasPermissions(APP_PERMISSIONS)) {
             requestAppPermission();
@@ -191,16 +201,26 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
         bindService(i, connection, Context.BIND_AUTO_CREATE);
     }
 
-    public void onClickOpenFile(View view) {
-        openFile();
-    }
 
-    public void onClickStart(View view) {
-        startPlaybackService();
-    }
-
-    public void onClickStop(View view) {
-        stopPlaybackService();
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.file_manager:
+                openFile();
+                break;
+            case R.id.start:
+                startPlaybackService();
+                break;
+            case R.id.stop:
+                stopPlaybackService();
+                break;
+            case R.id.pause:
+                pausePlaybackService();
+                break;
+            case R.id.resume:
+                resumePlaybackService();
+                break;
+        }
     }
 
     /**
@@ -276,21 +296,47 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
         }
     }
 
+    public void pausePlaybackService() {
+
+        try {
+            if (service != null) {
+                service.pause();
+            }
+
+        } catch (RemoteException e) {
+        }
+    }
+
+    public void resumePlaybackService() {
+
+        try {
+            if (service != null) {
+                service.resume();
+            }
+
+        } catch (RemoteException e) {
+        }
+    }
+
     private void updateUi() {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Button start = (Button) findViewById(R.id.start);
-                Button stop = (Button) findViewById(R.id.stop);
-
                 switch (state) {
                     case PlaybackService.RUNNING:
-                        start.setEnabled(false);
-                        stop.setEnabled(true);
+                        mButtonStart.setEnabled(false);
+                        mButtonStop.setEnabled(true);
+                        mButtonPause.setEnabled(true);
                         break;
                     case PlaybackService.STOPPED:
-                        start.setEnabled(true);
-                        stop.setEnabled(false);
+                        mButtonStart.setEnabled(true);
+                        mButtonStop.setEnabled(false);
+                        mButtonPause.setEnabled(true);
+                        break;
+                    case PlaybackService.PAUSED:
+                        mButtonStart.setEnabled(true);
+                        mButtonStop.setEnabled(true);
+                        mButtonPause.setEnabled(false);
                         break;
                 }
 

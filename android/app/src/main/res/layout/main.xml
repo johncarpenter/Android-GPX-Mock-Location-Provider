@@ -21,7 +21,6 @@
 		    android:layout_height="wrap_content" 
 		    android:layout_weight="1"/>
 		<ImageButton android:id="@+id/file_manager"
-			android:onClick="onClickOpenFile"
 			android:src="@drawable/ic_launcher_folder_small"
 	        android:layout_width="wrap_content"
 	        android:layout_height="wrap_content" />
@@ -36,7 +35,8 @@
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:layout_alignParentLeft="true"
-			android:layout_alignParentTop="true"/>
+			android:layout_alignParentTop="true"
+			android:text="Input Playback Delay (milliseconds)"/>
 
 		<EditText
 			android:id="@+id/editTextDelay"
@@ -85,19 +85,33 @@
 	</RadioGroup>
 
 	<Button android:id="@+id/start"
-		android:onClick="onClickStart"
 		android:text="Start Playback"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
 		android:layout_marginTop="10dip"
 		android:focusableInTouchMode="true"
 		/>
-		
+
 	<Button android:id="@+id/stop"
-		android:onClick="onClickStop"
 		android:text="Stop Playback"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
 		android:layout_marginTop="10dip" />
-		
+
+	<Button android:id="@+id/pause"
+		android:text="Pause Playback"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="10dip"
+		android:focusableInTouchMode="true"
+		/>
+
+	<Button android:id="@+id/resume"
+		android:text="Resume Playback"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="10dip"
+		android:focusableInTouchMode="true"
+		/>
+
 </LinearLayout>

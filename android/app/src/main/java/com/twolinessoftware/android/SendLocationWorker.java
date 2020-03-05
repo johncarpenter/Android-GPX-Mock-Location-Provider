@@ -60,7 +60,7 @@ public class SendLocationWorker extends Worker {
 	}
 
 	private void sendLocation(GpxTrackPoint point) {
-
+		Log.i("SendLocationWorker", "sendLocation with  : " + point.getLat() + " - " + point.getLon());
 		Location loc = new Location(providerName);
 		loc.setLatitude(point.getLat());
 		loc.setLongitude(point.getLon());

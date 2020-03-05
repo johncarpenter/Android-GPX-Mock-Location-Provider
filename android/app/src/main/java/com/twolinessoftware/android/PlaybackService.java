@@ -60,10 +60,13 @@ public class PlaybackService extends Service implements GpxSaxParserListener {
 
     public static final int RUNNING = 0;
     public static final int STOPPED = 1;
+    public static final int PAUSED = 2;
 
     private static final String PROVIDER_NAME = LocationManager.GPS_PROVIDER;
 
     private GpxTrackPoint lastPoint;
+
+    long delayTimeOnReplay = 0;
 
     private final IPlaybackService.Stub mBinder = new IPlaybackService.Stub() {
 
@@ -97,6 +100,27 @@ public class PlaybackService extends Service implements GpxSaxParserListener {
         @Override
         public int getState() throws RemoteException {
             return state;
+        }
+
+        @Override
+        public void pause(){
+            Log.e(LOG, "Pausing Playback Service");
+            broadcastStateChange(PAUSED);
+            queue.pause();
+
+            Log.d(LOG, "Sending Point at pause  !!!!!!! " + lastPoint.getLat() + " - " + lastPoint.getLon());
+
+            SendLocationWorkerQueue sendLocationWorkerQueue = new SendLocationWorkerQueue();
+            SendLocationWorker worker = new SendLocationWorker(mLocationManager, lastPoint, PROVIDER_NAME, 0);
+            sendLocationWorkerQueue.addToQueue(worker);
+            sendLocationWorkerQueue.start(delayTimeOnReplay);
+
+        }
+
+        @Override
+        public void resume() {
+            Log.e(LOG, "Resuming Playback Service");
+            queue.resume();
         }
 
     };
@@ -150,7 +174,7 @@ public class PlaybackService extends Service implements GpxSaxParserListener {
         }
 
         if (timeFromIntent != null && !"".equalsIgnoreCase(timeFromIntent)) {
-            long delayTimeOnReplay = Long.valueOf(timeFromIntent);
+            delayTimeOnReplay = Long.valueOf(timeFromIntent);
             queue.start(delayTimeOnReplay);
         }
 
@@ -295,7 +319,7 @@ public class PlaybackService extends Service implements GpxSaxParserListener {
 
     @Override
     public void onGpxPoint(GpxTrackPoint item) {
-
+        Log.d(LOG, "onGpxPoint ------------------------------- ");
         long delay = System.currentTimeMillis() + 2000; // ms until the point should be displayed
 
         long gpsPointTime = 0;

@@ -15,6 +15,8 @@
  */
 package com.twolinessoftware.android;
 
+import androidx.annotation.WorkerThread;
+
 import com.twolinessoftware.android.framework.util.Logger;
 
 import java.util.LinkedList;
@@ -51,6 +53,24 @@ public class SendLocationWorkerQueue {
 		 * synchronized(lock){ lock.notify(); }
 		 */
         running = false;
+    }
+
+    public synchronized void pause() {
+        running = false;
+//        synchronized (lock) {
+//            try {
+//                lock.wait();
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//        }
+    }
+
+    public synchronized void resume() {
+        running = true;
+        synchronized (lock) {
+            lock.notifyAll();
+        }
     }
 
     public void reset() {
