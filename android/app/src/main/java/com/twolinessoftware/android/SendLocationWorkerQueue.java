@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011 2linessoftware.com
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,23 +15,27 @@
  */
 package com.twolinessoftware.android;
 
-import androidx.annotation.WorkerThread;
-
+import com.twolinessoftware.android.framework.service.comms.gpx.GpxTrackPoint;
 import com.twolinessoftware.android.framework.util.Logger;
 
 import java.util.LinkedList;
 
 public class SendLocationWorkerQueue {
+    private static final String TAG = SendLocationWorkerQueue.class.getSimpleName();
 
     private LinkedList<SendLocationWorker> queue;
     private boolean running;
+    private boolean pause;
     private WorkerThread thread;
+    private GpxTrackPoint currentPointWorker;
 
     private Object lock = new Object();
 
     public SendLocationWorkerQueue() {
-        queue = new LinkedList<SendLocationWorker>();
+        queue = new LinkedList<>();
         running = false;
+        pause = false;
+        currentPointWorker = null;
     }
 
 
@@ -44,39 +48,35 @@ public class SendLocationWorkerQueue {
 
     public synchronized void start(long delayTimeOnReplay) {
         running = true;
+        pause = false;
         thread = new WorkerThread(delayTimeOnReplay);
         thread.start();
     }
 
     public synchronized void stop() {
         /*
-		 * synchronized(lock){ lock.notify(); }
-		 */
+         * synchronized(lock){ lock.notify(); }
+         */
         running = false;
     }
 
     public synchronized void pause() {
-        running = false;
-//        synchronized (lock) {
-//            try {
-//                lock.wait();
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            }
-//        }
+        synchronized (lock) {
+            pause = true;
+        }
     }
 
     public synchronized void resume() {
-        running = true;
         synchronized (lock) {
+            pause = false;
             lock.notifyAll();
         }
+
     }
 
     public void reset() {
         stop();
-        queue = new LinkedList<SendLocationWorker>();
-
+        queue.clear();// = new LinkedList<>();
         stopThread();
     }
 
@@ -85,10 +85,22 @@ public class SendLocationWorkerQueue {
             try {
                 thread.interrupt();
             } catch (Exception e) {
-                Logger.i("SendLocationWorkerQueue.stopThread() - exception", "" + e.getMessage());
+                Logger.i(TAG, "SendLocationWorkerQueue.stopThread() - exception " + e.getMessage());
             }
             this.thread = null;
         }
+    }
+
+    public boolean isRunning() {
+        return running;
+    }
+
+    public int getQueueSize() {
+        return queue.size();
+    }
+
+    public GpxTrackPoint getCurrentPointWorker() {
+        return currentPointWorker;
     }
 
     private class WorkerThread extends Thread {
@@ -101,16 +113,21 @@ public class SendLocationWorkerQueue {
 
         public void run() {
             while (running) {
-
                 if (queue.size() > 0) {
-
                     SendLocationWorker worker = queue.pop();
-
+                    currentPointWorker = worker.getPoint();
                     synchronized (lock) {
+                        while (pause) {
+                            try {
+                                lock.wait();
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
                         try {
                             lock.wait(TIME_BETWEEN_SENDS);
-
-                            Logger.i("SendLocationWorkerQueue.running - TIME_BETWEEN_SENDS : " + TIME_BETWEEN_SENDS, " - sent at time : " + System.currentTimeMillis());
+                            Logger.i(TAG, "SendLocationWorkerQueue.running - TIME_BETWEEN_SENDS : " + TIME_BETWEEN_SENDS + " - sent at time : " + System.currentTimeMillis());
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -121,5 +138,4 @@ public class SendLocationWorkerQueue {
             }
         }
     }
-
 }

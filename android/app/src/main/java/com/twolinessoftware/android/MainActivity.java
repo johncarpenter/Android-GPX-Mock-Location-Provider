@@ -56,7 +56,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-public class MainActivity extends AppCompatActivity implements GpsPlaybackListener, View.OnClickListener{
+public class MainActivity extends AppCompatActivity implements GpsPlaybackListener, View.OnClickListener {
 
     private String[] APP_PERMISSIONS = {
             Manifest.permission.ACCESS_FINE_LOCATION,
@@ -68,7 +68,7 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
     private static final int REQUEST_PERMISSION_APP_SETTING = 3;
     private static final int REQUEST_APP_PERMISSION = 4;
 
-    private static final String LOGNAME = "SimulatedGPSProvider.MainActivity";
+    private static final String TAG = MainActivity.class.getSimpleName();
 
     private ServiceConnection connection;
     private IPlaybackService service;
@@ -79,17 +79,11 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
     private RadioButton mRadioButtonChecked;
     private Button mButtonStart;
     private Button mButtonStop;
-    private Button mButtonPause;
-    private Button mButtonResume;
 
     private String filepath;
-
     private String delayTimeOnReplay = "";
-
     private GpsPlaybackBroadcastReceiver receiver;
-
     private int state;
-
     private ProgressDialog progressDialog;
 
     private static final String APP_DATA_CACHE_FILENAME = "gpx_app_data_cache";
@@ -109,8 +103,6 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
         mRadioGroupDelay = findViewById(R.id.radioGroupDelay);
         mButtonStart = findViewById(R.id.start);
         mButtonStop = findViewById(R.id.stop);
-        mButtonPause = findViewById(R.id.pause);
-        mButtonResume = findViewById(R.id.resume);
 
         initHandler();
     }
@@ -119,8 +111,6 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
         mImageViewFileManager.setOnClickListener(this);
         mButtonStart.setOnClickListener(this);
         mButtonStop.setOnClickListener(this);
-        mButtonPause.setOnClickListener(this);
-        mButtonResume.setOnClickListener(this);
 
         mEditTextDelay.setOnFocusChangeListener((v, hasFocus) -> {
             if (!hasFocus) {
@@ -140,6 +130,8 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
             delayTimeOnReplay = mRadioButtonChecked.getText().toString();
             mEditTextDelay.setText(delayTimeOnReplay);
         });
+
+        mButtonStart.setEnabled(filepath != null);
 
         if (!hasPermissions(APP_PERMISSIONS)) {
             requestAppPermission();
@@ -162,7 +154,6 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
         if (LocationUtil.isMockLocationEnabled(this)) {
             if (receiver != null)
                 unregisterReceiver(receiver);
-
             try {
                 unbindService(connection);
             } catch (Exception ie) {
@@ -209,16 +200,21 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
                 openFile();
                 break;
             case R.id.start:
-                startPlaybackService();
+                switch (state) {
+                    case PlaybackService.STOPPED:
+                        startPlaybackService();
+                        break;
+                    case PlaybackService.RUNNING:
+                    case PlaybackService.RESUME:
+                        pausePlaybackService();
+                        break;
+                    case PlaybackService.PAUSED:
+                        resumePlaybackService();
+                        break;
+                }
                 break;
             case R.id.stop:
                 stopPlaybackService();
-                break;
-            case R.id.pause:
-                pausePlaybackService();
-                break;
-            case R.id.resume:
-                resumePlaybackService();
                 break;
         }
     }
@@ -227,9 +223,7 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
      * Opens the file manager to select a file to open.
      */
     public void openFile() {
-
         String fileName = getGpxFilePath();
-
         Intent intent = new Intent(FileManagerIntents.ACTION_PICK_FILE);
 
         // Construct URI from file name.
@@ -244,7 +238,6 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
 
         try {
             startActivityForResult(intent, REQUEST_FILE);
-
         } catch (ActivityNotFoundException e) {
             // No compatible file manager was found.
             Toast.makeText(this, R.string.no_filemanager_installed,
@@ -256,7 +249,6 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
      * "Start" button clicked
      */
     public void startPlaybackService() {
-
         if (filepath == null) {
             Toast.makeText(this, "No File Loaded", Toast.LENGTH_SHORT).show();
             return;
@@ -267,13 +259,13 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
             return;
         }
 
-
         try {
             if (service != null) {
                 service.startService(filepath);
             }
 
         } catch (RemoteException e) {
+            e.printStackTrace();
         }
 
         Intent i = new Intent(getApplicationContext(), PlaybackService.class);
@@ -287,73 +279,64 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
             if (service != null) {
                 saveGpxFilePath(filepath);
                 mEditText.setText(filepath);
-
                 service.stopService();
             }
-
-
         } catch (RemoteException e) {
+            e.printStackTrace();
         }
     }
 
     public void pausePlaybackService() {
-
         try {
             if (service != null) {
                 service.pause();
             }
-
         } catch (RemoteException e) {
+            e.printStackTrace();
         }
     }
 
     public void resumePlaybackService() {
-
         try {
             if (service != null) {
                 service.resume();
             }
 
         } catch (RemoteException e) {
+            e.printStackTrace();
         }
     }
 
     private void updateUi() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                switch (state) {
-                    case PlaybackService.RUNNING:
-                        mButtonStart.setEnabled(false);
-                        mButtonStop.setEnabled(true);
-                        mButtonPause.setEnabled(true);
-                        break;
-                    case PlaybackService.STOPPED:
-                        mButtonStart.setEnabled(true);
-                        mButtonStop.setEnabled(false);
-                        mButtonPause.setEnabled(true);
-                        break;
-                    case PlaybackService.PAUSED:
-                        mButtonStart.setEnabled(true);
-                        mButtonStop.setEnabled(true);
-                        mButtonPause.setEnabled(false);
-                        break;
-                }
-
+        runOnUiThread(() -> {
+            switch (state) {
+                case PlaybackService.RUNNING:
+                case PlaybackService.RESUME:
+                    mButtonStart.setText(getString(R.string.pause_playback));
+                    mButtonStart.setEnabled(true);
+                    mButtonStop.setEnabled(true);
+                    break;
+                case PlaybackService.STOPPED:
+                    mButtonStart.setText(getString(R.string.start_playback));
+                    mButtonStop.setEnabled(false);
+                    break;
+                case PlaybackService.PAUSED:
+                    mButtonStart.setText(getString(R.string.resume_playback));
+                    mButtonStart.setEnabled(true);
+                    mButtonStop.setEnabled(true);
+                    break;
             }
-
         });
 
     }
 
     class PlaybackServiceConnection implements ServiceConnection {
-
         public void onServiceConnected(ComponentName name, IBinder boundService) {
             service = IPlaybackService.Stub.asInterface(boundService);
             try {
                 state = service.getState();
             } catch (RemoteException e) {
-                Logger.e(LOGNAME, "Unable to access state:" + e.getMessage());
+                Logger.e(TAG, "Unable to access state:" + e.getMessage());
             }
             updateUi();
         }
@@ -361,7 +344,6 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
         public void onServiceDisconnected(ComponentName name) {
             service = null;
         }
-
     }
 
     /**
@@ -382,6 +364,7 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
                             mEditText.setText(filePath);
                             hideKeyboard(mEditText, this);
                             this.filepath = filePath;
+                            mButtonStart.setEnabled(true);
                         }
                     }
                 }
@@ -402,13 +385,13 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
 
     @Override
     public void onFileLoadStarted() {
-        Logger.d(LOGNAME, "File loading started");
+        Logger.d(TAG, "File loading started");
         showProgressDialog();
     }
 
     @Override
     public void onFileLoadFinished() {
-        Logger.d(LOGNAME, "File loading finished");
+        Logger.d(TAG, "File loading finished");
         hideProgressDialog();
     }
 
@@ -440,7 +423,7 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
             fos.close();
 
         } catch (java.lang.Exception e) {
-            Logger.d(LOGNAME, "saveGpxFilePath exception: " + e.getMessage());
+            Logger.d(TAG, "saveGpxFilePath exception: " + e.getMessage());
         }
     }
 
@@ -463,7 +446,7 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
             fis.close();
 
         } catch (java.lang.Exception e) {
-            Logger.d(LOGNAME, "getGpxFilePath - no cache file detected - default path being used e.g /");
+            Logger.d(TAG, "getGpxFilePath - no cache file detected - default path being used e.g /");
         }
         return filepath;
     }

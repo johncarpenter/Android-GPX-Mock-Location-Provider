@@ -36,7 +36,7 @@
 			android:layout_height="wrap_content"
 			android:layout_alignParentLeft="true"
 			android:layout_alignParentTop="true"
-			android:text="Input Playback Delay (milliseconds)"/>
+			android:text="@string/input_playback_delay_milliseconds"/>
 
 		<EditText
 			android:id="@+id/editTextDelay"
@@ -85,7 +85,7 @@
 	</RadioGroup>
 
 	<Button android:id="@+id/start"
-		android:text="Start Playback"
+		android:text="@string/start_playback"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
 		android:layout_marginTop="10dip"
@@ -93,25 +93,9 @@
 		/>
 
 	<Button android:id="@+id/stop"
-		android:text="Stop Playback"
+		android:text="@string/stop_playback"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
 		android:layout_marginTop="10dip" />
-
-	<Button android:id="@+id/pause"
-		android:text="Pause Playback"
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content"
-		android:layout_marginTop="10dip"
-		android:focusableInTouchMode="true"
-		/>
-
-	<Button android:id="@+id/resume"
-		android:text="Resume Playback"
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content"
-		android:layout_marginTop="10dip"
-		android:focusableInTouchMode="true"
-		/>
 
 </LinearLayout>

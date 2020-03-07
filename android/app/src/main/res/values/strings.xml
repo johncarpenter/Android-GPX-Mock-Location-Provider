@@ -17,5 +17,10 @@
     <string name="require_permission_app_settings">You must approve all permissions in the app settings.</string>
     <string name="require_permission">%1$s are required to in order to provide application features.</string>
     <string name="ok">Ok</string>
+    <string name="start_playback">Start Playback</string>
+    <string name="pause_playback">Pause Playback</string>
+    <string name="resume_playback">Resume Playback</string>
+    <string name="stop_playback">Stop Playback</string>
+    <string name="input_playback_delay_milliseconds">Input Playback Delay (milliseconds)</string>
 
 </resources>

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011 2linessoftware.com
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -23,49 +23,49 @@ import com.twolinessoftware.android.framework.service.comms.Worker;
 import com.twolinessoftware.android.framework.service.comms.gpx.GpxTrackPoint;
 
 import java.lang.reflect.Method;
-import java.text.SimpleDateFormat;
-import java.text.ParseException;
-import java.util.Date;
-import java.util.Locale;
-import java.util.TimeZone;
 
 public class SendLocationWorker extends Worker {
+    private static final String TAG = SendLocationWorker.class.getSimpleName();
 
-	private GpxTrackPoint point;
-	private String providerName;
-	private LocationManager mLocationManager;
+    private GpxTrackPoint point;
+    private String providerName;
+    private LocationManager mLocationManager;
 
-	private long sendTime;
+    private long sendTime;
 
-	public long getSendTime() {
-		return sendTime;
-	}
+    public long getSendTime() {
+        return sendTime;
+    }
 
-	public void setSendTime(long sendTime) {
-		this.sendTime = sendTime;
-	}
+    public void setSendTime(long sendTime) {
+        this.sendTime = sendTime;
+    }
 
-	public SendLocationWorker(LocationManager mLocationManager,
-			GpxTrackPoint point, String providerName, long localSendTime) {
-		super();
-		this.point = point;
-		this.providerName = providerName;
-		this.mLocationManager = mLocationManager;
-		this.sendTime = localSendTime;
-	}
+    public GpxTrackPoint getPoint() {
+        return this.point;
+    }
 
-	@Override
-	public void run() {
-		sendLocation(point);
-	}
+    public SendLocationWorker(LocationManager mLocationManager,
+                              GpxTrackPoint point, String providerName, long localSendTime) {
+        super();
+        this.point = point;
+        this.providerName = providerName;
+        this.mLocationManager = mLocationManager;
+        this.sendTime = localSendTime;
+    }
 
-	private void sendLocation(GpxTrackPoint point) {
-		Log.i("SendLocationWorker", "sendLocation with  : " + point.getLat() + " - " + point.getLon());
-		Location loc = new Location(providerName);
-		loc.setLatitude(point.getLat());
-		loc.setLongitude(point.getLon());
+    @Override
+    public void run() {
+        sendLocation(point);
+    }
 
-		loc.setTime(System.currentTimeMillis());
+    private void sendLocation(GpxTrackPoint point) {
+        Log.w(TAG, "sendLocation with  : " + point.getLat() + " - " + point.getLon() + " - " + point.getTime() + " - " + point.getSpeed());
+        Location loc = new Location(providerName);
+        loc.setLatitude(point.getLat());
+        loc.setLongitude(point.getLon());
+
+        loc.setTime(System.currentTimeMillis());
 
         loc.setBearing((float) point.getHeading());
         loc.setAccuracy(1.0f);
@@ -73,28 +73,21 @@ public class SendLocationWorker extends Worker {
         loc.setAltitude(100.0);
 
 
-		// bk added
-		Method method;
-		try {
-			method = Location.class.getMethod("makeComplete", new Class[0]);
-			if (method != null)
-			{
-				try
-				{
-					method.invoke(loc, new Object[0]);
-				}
-				catch (Exception exception) { }
-			}
-		} catch (NoSuchMethodException e) {
-			e.printStackTrace();
-		}
-
-
-		Log.d("SendLocation", "Sending update for " + providerName);
-		mLocationManager.setTestProviderLocation(providerName, loc);
-
-
-
-	}
+        // bk added
+        Method method;
+        try {
+            method = Location.class.getMethod("makeComplete", new Class[0]);
+            if (method != null) {
+                try {
+                    method.invoke(loc, new Object[0]);
+                } catch (Exception exception) {
+                }
+            }
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+        Log.d(TAG, "Sending update for " + providerName);
+        mLocationManager.setTestProviderLocation(providerName, loc);
+    }
 
 }
