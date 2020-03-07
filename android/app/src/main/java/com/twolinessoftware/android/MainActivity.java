@@ -120,8 +120,9 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
 
         mEditText.setFocusable(false);
         mEditText.setOnFocusChangeListener((view, b) -> {
-            if (b)
+            if (b) {
                 hideKeyboard(view, MainActivity.this);
+            }
         });
 
         mRadioGroupDelay.setOnCheckedChangeListener((radioGroup, i) -> {
@@ -130,6 +131,12 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
             delayTimeOnReplay = mRadioButtonChecked.getText().toString();
             mEditTextDelay.setText(delayTimeOnReplay);
         });
+
+        String fileName = getGpxFilePath();
+        if(fileName != null) {
+            filepath = fileName;
+            mEditText.setText(filepath);
+        }
 
         mButtonStart.setEnabled(filepath != null);
 
@@ -240,7 +247,7 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
             startActivityForResult(intent, REQUEST_FILE);
         } catch (ActivityNotFoundException e) {
             // No compatible file manager was found.
-            Toast.makeText(this, R.string.no_filemanager_installed,
+            Toast.makeText(this, R.string.no_file_manager_installed,
                     Toast.LENGTH_SHORT).show();
         }
     }
@@ -318,6 +325,7 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
                     break;
                 case PlaybackService.STOPPED:
                     mButtonStart.setText(getString(R.string.start_playback));
+                    mButtonStart.setEnabled(true);
                     mButtonStop.setEnabled(false);
                     break;
                 case PlaybackService.PAUSED:
@@ -422,8 +430,8 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
             }
             fos.close();
 
-        } catch (java.lang.Exception e) {
-            Logger.d(TAG, "saveGpxFilePath exception: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -445,8 +453,8 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
             }
             fis.close();
 
-        } catch (java.lang.Exception e) {
-            Logger.d(TAG, "getGpxFilePath - no cache file detected - default path being used e.g /");
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return filepath;
     }

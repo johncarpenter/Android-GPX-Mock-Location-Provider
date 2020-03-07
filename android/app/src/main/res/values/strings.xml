@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">AndroidMockGpx</string>
-    <string name="no_filemanager_installed">No compatible file manager found</string>
-    <string name="file_name">File name</string>
+    <string name="no_file_manager_installed">No compatible file manager found</string>
+    <string name="file_location">GPX file location</string>
     <string name="open_title">Select file to open</string>
     <string name="open_button">Open</string>
     <string name="save_title">Select file to save</string>
@@ -21,6 +21,6 @@
     <string name="pause_playback">Pause Playback</string>
     <string name="resume_playback">Resume Playback</string>
     <string name="stop_playback">Stop Playback</string>
-    <string name="input_playback_delay_milliseconds">Input Playback Delay (milliseconds)</string>
+    <string name="input_playback_delay_milliseconds">Input Playback Delay (milliseconds):</string>
 
 </resources>

@@ -1,101 +1,109 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    >
-<TextView  
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" 
-    android:text="@string/file_name"
-	android:textAppearance="?android:attr/textAppearanceMedium"
-    android:layout_marginTop="10dip"
-    android:layout_marginLeft="10dip"
-    />
-    <LinearLayout android:orientation="horizontal"
-	    android:layout_width="fill_parent"
-	    android:layout_height="wrap_content"
-	    >
-	    <EditText android:id="@+id/file_path"
-		    android:layout_width="0dip" 
-		    android:layout_height="wrap_content" 
-		    android:layout_weight="1"/>
-		<ImageButton android:id="@+id/file_manager"
-			android:src="@drawable/ic_launcher_folder_small"
-	        android:layout_width="wrap_content"
-	        android:layout_height="wrap_content" />
-	</LinearLayout>
+    android:orientation="vertical">
 
-	<LinearLayout android:orientation="horizontal"
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content"
-		>
-		<TextView
-			android:id="@+id/label_edit_text_delay"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:layout_alignParentLeft="true"
-			android:layout_alignParentTop="true"
-			android:text="@string/input_playback_delay_milliseconds"/>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="10dp"
+        android:text="@string/file_location"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
 
-		<EditText
-			android:id="@+id/editTextDelay"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:layout_toRightOf="@+id/label_edit_text_delay"
-			android:imeOptions="actionNext"
-			android:inputType="number"
-			android:text="1000">
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
 
-			<requestFocus />
-		</EditText>
+        <EditText
+            android:id="@+id/file_path"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
 
-	</LinearLayout>
+        <ImageButton
+            android:id="@+id/file_manager"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_folder_black_24dp"
+			android:tint="@color/colorYellow"/>
+    </LinearLayout>
 
-	<RadioGroup
-		android:id="@+id/radioGroupDelay"
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:orientation="horizontal">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+		android:layout_marginLeft="8dp">
 
-		<RadioButton
-			android:id="@+id/radioButton"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:checked="true"
-			android:text="1000" />
+        <TextView
+            android:id="@+id/label_edit_text_delay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:text="@string/input_playback_delay_milliseconds" />
 
-		<RadioButton
-			android:id="@+id/radioButton_1x"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:text="1500" />
+        <EditText
+            android:id="@+id/editTextDelay"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@+id/label_edit_text_delay"
+            android:imeOptions="actionNext"
+            android:inputType="number"
+            android:text="1000">
 
-		<RadioButton
-			android:id="@+id/radioButton_2x"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:text="2000" />
+            <requestFocus />
+        </EditText>
 
-		<RadioButton
-			android:id="@+id/radioButton_3x"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:text="3000" />
-	</RadioGroup>
+    </LinearLayout>
 
-	<Button android:id="@+id/start"
-		android:text="@string/start_playback"
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content"
-		android:layout_marginTop="10dip"
-		android:focusableInTouchMode="true"
-		/>
+    <RadioGroup
+        android:id="@+id/radioGroupDelay"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
 
-	<Button android:id="@+id/stop"
-		android:text="@string/stop_playback"
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content"
-		android:layout_marginTop="10dip" />
+        <RadioButton
+            android:id="@+id/radioButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="1000" />
+
+        <RadioButton
+            android:id="@+id/radioButton_1x"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1500" />
+
+        <RadioButton
+            android:id="@+id/radioButton_2x"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="2000" />
+
+        <RadioButton
+            android:id="@+id/radioButton_3x"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="3000" />
+    </RadioGroup>
+
+    <Button
+        android:id="@+id/start"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:focusableInTouchMode="true"
+        android:text="@string/start_playback" />
+
+    <Button
+        android:id="@+id/stop"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="@string/stop_playback" />
 
 </LinearLayout>
