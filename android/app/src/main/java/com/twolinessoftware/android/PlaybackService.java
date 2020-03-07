@@ -117,6 +117,13 @@ public class PlaybackService extends Service implements GpxSaxParserListener {
             queue.resume();
         }
 
+        @Override
+        public void updateDelayTime(long timeInMilliseconds){
+            if(state == PAUSED) {
+                Log.e(TAG, "Updating Delay Time Playback Service");
+                queue.updateDelayTime(timeInMilliseconds);
+            }
+        }
     };
 
     private LocationManager mLocationManager;
@@ -151,12 +158,13 @@ public class PlaybackService extends Service implements GpxSaxParserListener {
         String timeFromIntent = null;
         try {
             timeFromIntent = intent.getStringExtra("delayTimeOnReplay");
-        } catch (java.lang.NullPointerException npe) {
+        } catch (NullPointerException npe) {
             // suppress npe if delay time not available.
+            npe.printStackTrace();
         }
 
         if (timeFromIntent != null && !"".equalsIgnoreCase(timeFromIntent)) {
-            delayTimeOnReplay = Long.valueOf(timeFromIntent);
+            delayTimeOnReplay = Long.parseLong(timeFromIntent);
             queue.start(delayTimeOnReplay);
         }
 

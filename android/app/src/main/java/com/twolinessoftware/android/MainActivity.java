@@ -130,6 +130,9 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
             mRadioButtonChecked = findViewById(selectId);
             delayTimeOnReplay = mRadioButtonChecked.getText().toString();
             mEditTextDelay.setText(delayTimeOnReplay);
+            if(state == PlaybackService.PAUSED) {
+                updateDelayTimePlayService(Long.parseLong(delayTimeOnReplay));
+            }
         });
 
         String fileName = getGpxFilePath();
@@ -308,7 +311,16 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
             if (service != null) {
                 service.resume();
             }
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
 
+    private void updateDelayTimePlayService(long timeInMilliseconds) {
+        try {
+            if(service !=null) {
+                service.updateDelayTime(timeInMilliseconds);
+            }
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -319,16 +331,28 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
             switch (state) {
                 case PlaybackService.RUNNING:
                 case PlaybackService.RESUME:
+                    if(state == PlaybackService.RUNNING) {
+                        mEditText.setEnabled(false);
+                        mImageViewFileManager.setEnabled(false);
+                    }
+                    mEditTextDelay.setEnabled(false);
+                    enableRadioGroupDelay(false);
                     mButtonStart.setText(getString(R.string.pause_playback));
                     mButtonStart.setEnabled(true);
                     mButtonStop.setEnabled(true);
                     break;
                 case PlaybackService.STOPPED:
+                    mEditText.setEnabled(true);
+                    mImageViewFileManager.setEnabled(true);
+                    mEditTextDelay.setEnabled(true);
+                    enableRadioGroupDelay(true);
                     mButtonStart.setText(getString(R.string.start_playback));
                     mButtonStart.setEnabled(true);
                     mButtonStop.setEnabled(false);
                     break;
                 case PlaybackService.PAUSED:
+                    mEditTextDelay.setEnabled(true);
+                    enableRadioGroupDelay(true);
                     mButtonStart.setText(getString(R.string.resume_playback));
                     mButtonStart.setEnabled(true);
                     mButtonStop.setEnabled(true);
@@ -336,6 +360,12 @@ public class MainActivity extends AppCompatActivity implements GpsPlaybackListen
             }
         });
 
+    }
+
+    private void enableRadioGroupDelay(boolean isEnable) {
+        for(int i = 0; i < mRadioGroupDelay.getChildCount(); i ++) {
+            mRadioGroupDelay.getChildAt(i).setEnabled(isEnable);
+        }
     }
 
     class PlaybackServiceConnection implements ServiceConnection {

@@ -27,4 +27,6 @@ interface IPlaybackService{
 
 	void resume();
 
+	void updateDelayTime(long timeInMilliseconds);
+
 }

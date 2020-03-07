@@ -103,6 +103,13 @@ public class SendLocationWorkerQueue {
         return currentPointWorker;
     }
 
+    public synchronized void updateDelayTime(long timeInMilliseconds){
+        synchronized (lock){
+            if(thread != null)
+                thread.updateDelayTimeOnReplay(timeInMilliseconds);
+        }
+    }
+
     private class WorkerThread extends Thread {
 
         private long TIME_BETWEEN_SENDS = 1000; // milliseconds
@@ -136,6 +143,10 @@ public class SendLocationWorkerQueue {
                     worker.run();
                 }
             }
+        }
+
+        public void updateDelayTimeOnReplay(long timeInMilliseconds ) {
+            TIME_BETWEEN_SENDS = timeInMilliseconds;
         }
     }
 }
