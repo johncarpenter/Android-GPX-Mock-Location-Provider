@@ -151,6 +151,9 @@ public class PlaybackService extends Service implements GpxSaxParserListener {
             long delayTimeOnReplay = Long.valueOf(timeFromIntent);
             queue.start(delayTimeOnReplay);
         }
+        else {
+            queue.start(0);
+        }
 
         // We want this service to continue running until it is explicitly
         // stopped, so return sticky.
