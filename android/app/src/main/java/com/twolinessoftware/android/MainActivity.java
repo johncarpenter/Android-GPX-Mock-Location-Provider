@@ -23,6 +23,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.AppOpsManager;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
@@ -32,20 +34,29 @@ import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.provider.Settings;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.Manifest;
 
 import com.twolinessoftware.android.framework.util.Logger;
+
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 
 public class MainActivity extends Activity implements GpsPlaybackListener {
 
@@ -72,6 +83,63 @@ public class MainActivity extends Activity implements GpsPlaybackListener {
 	private static final String APP_DATA_CACHE_FILENAME = "gpx_app_data_cache";
 	private static final String DEFAULT_PATH_TO_GPX_FILE = "/";
 
+	public static final int MY_PERMISSIONS_REQUEST_STORAGE = 98;
+	public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
+
+	private static final String TAG = MainActivity.class.getSimpleName();
+
+
+	// Function to check and request permission
+	public void checkPermission(String permission, int requestCode)
+	{
+
+		// Checking if permission is not granted
+		if (ContextCompat.checkSelfPermission(
+				MainActivity.this,
+				permission)
+				== PackageManager.PERMISSION_DENIED) {
+			ActivityCompat
+					.requestPermissions(
+							MainActivity.this,
+							new String[] { permission },
+							requestCode);
+		}
+		else {
+		}
+	}
+
+	@Override
+	public void onRequestPermissionsResult(int requestCode,
+										   String permissions[], int[] grantResults) {
+		switch (requestCode) {
+			case MY_PERMISSIONS_REQUEST_LOCATION: {
+				// If request is cancelled, the result arrays are empty.
+				if (grantResults.length > 0
+						&& grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+					// permission was granted, yay! Do the
+					// location-related task you need to do.
+					if (ContextCompat.checkSelfPermission(this,
+							ACCESS_FINE_LOCATION)
+							== PackageManager.PERMISSION_GRANTED) {
+
+						//Request location updates:
+						Log.d("Main", "Location permitted");
+					} else {
+						// permission denied, boo! Disable the
+						// functionality that depends on this permission.
+
+					}
+					return;
+				}
+			}
+			case MY_PERMISSIONS_REQUEST_STORAGE: {
+				Log.d("Main", "Location permitted");
+			}
+			return;
+		}
+	}
+
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -85,7 +153,6 @@ public class MainActivity extends Activity implements GpsPlaybackListener {
 		mLabelEditText.setTextSize(17);
 		mLabelEditText.setTextColor(Color.WHITE);
 
-
 		mEditTextDelay = (EditText) findViewById(R.id.editTextDelay);
 
 		mEditTextDelay.setOnFocusChangeListener(new View.OnFocusChangeListener() {
@@ -96,6 +163,12 @@ public class MainActivity extends Activity implements GpsPlaybackListener {
 				}
 			}
 		});
+
+		if (!MockUtils.Companion.canMockLocation(this)) {
+			checkPermission(ACCESS_FINE_LOCATION, MY_PERMISSIONS_REQUEST_LOCATION);
+			Toast.makeText(this, "Please grant permission to mock location and restart the app", Toast.LENGTH_LONG).show();
+		}
+		checkPermission(READ_EXTERNAL_STORAGE, MY_PERMISSIONS_REQUEST_LOCATION);
 	}
 
 	@Override

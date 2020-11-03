@@ -15,6 +15,7 @@
  */
 package com.twolinessoftware.android;
 
+import android.app.AppOpsManager;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -23,7 +24,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.location.Criteria;
 import android.location.LocationManager;
+import android.location.LocationProvider;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.v4.app.NotificationCompat;
@@ -212,28 +215,32 @@ public class PlaybackService extends Service implements GpxSaxParserListener {
     private void disableGpsProvider() {
 
         if (mLocationManager.getProvider(PROVIDER_NAME) != null) {
-
-            mLocationManager.setTestProviderEnabled(PROVIDER_NAME, false);
-            mLocationManager.clearTestProviderEnabled(PROVIDER_NAME);
-            mLocationManager.clearTestProviderLocation(PROVIDER_NAME);
-
-            mLocationManager.removeTestProvider(PROVIDER_NAME);
-
+            try {
+                mLocationManager.setTestProviderEnabled(PROVIDER_NAME, false);
+                mLocationManager.clearTestProviderEnabled(PROVIDER_NAME);
+                mLocationManager.clearTestProviderLocation(PROVIDER_NAME);
+                mLocationManager.removeTestProvider(PROVIDER_NAME);
+            }
+            catch ( IllegalArgumentException e ) {
+                Log.d("Main", "Error removing mock provider, probably a real one exits with the same name.");
+            }
         }
     }
 
     private void setupTestProvider() {
-        mLocationManager.addTestProvider(PROVIDER_NAME, false, //requiresNetwork,
-                false, // requiresSatellite,
-                false, // requiresCell,
-                false, // hasMonetaryCost,
-                false, // supportsAltitude,
-                false, // supportsSpeed, s
-                false, // upportsBearing,
-                Criteria.POWER_LOW, // powerRequirement
-                Criteria.ACCURACY_FINE); // accuracy
-
-        mLocationManager.setTestProviderEnabled("gps", true);
+        disableGpsProvider();
+        if (MockUtils.Companion.canMockLocation(this)) {
+            mLocationManager.addTestProvider(PROVIDER_NAME, false, //requiresNetwork,
+                    false, // requiresSatellite,
+                    false, // requiresCell,
+                    false, // hasMonetaryCost,
+                    false, // supportsAltitude,
+                    false, // supportsSpeed, s
+                    false, // upportsBearing,
+                    Criteria.POWER_LOW, // powerRequirement
+                    Criteria.ACCURACY_FINE); // accuracy
+            mLocationManager.setTestProviderEnabled(PROVIDER_NAME, true);
+        }
     }
 
 
