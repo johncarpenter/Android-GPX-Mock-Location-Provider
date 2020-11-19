@@ -101,9 +101,23 @@ class PlaybackService : Service(), GpxSaxParserListener {
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         Log.d(LOG, "Starting Playback Service")
 
-        intent.extras.let {
-            val timeFromIntent = it.get(INTENT_DELAY_TIME_ON_REPLAY)
-            val filename = it.get(INTENT_FILENAME)
+        val staticLocation = intent.getStringExtra(INTENT_STATIC_LOCATION)
+        if (staticLocation != null) {
+            var location = STATIC_LOCATIONS[staticLocation]
+            if (location == null) {
+                location = STATIC_LOCATIONS["Berlin"]
+            }
+            location?.let {
+                var gpxPoint = GpxTrackPoint()
+                gpxPoint.ele = 0f
+                gpxPoint.heading = 0.0
+                gpxPoint.lat = location["latitude"] ?: 52.52
+                gpxPoint.lon = location["longitude"] ?: 13.13
+                queue?.addToQueue(SendLocationWorker(mLocationManager, gpxPoint, PROVIDER_NAME,
+                        0))
+                queue?.start(0)
+            }
+            return START_STICKY
         }
 
         var timeFromIntent: String? = null
@@ -118,9 +132,9 @@ class PlaybackService : Service(), GpxSaxParserListener {
 
         if (timeFromIntent != null && !"".equals(timeFromIntent, ignoreCase = true)) {
             val delayTimeOnReplay = java.lang.Long.valueOf(timeFromIntent)
-            queue!!.start(delayTimeOnReplay)
+            queue?.start(delayTimeOnReplay)
         } else {
-            queue!!.start(0)
+            queue?.start(0)
         }
 
         broadcastStateChange(RUNNING)
@@ -345,14 +359,20 @@ class PlaybackService : Service(), GpxSaxParserListener {
     }
 
     companion object {
+        const val RUNNING = 0
+        const val STOPPED = 1
+        const val INTENT_DELAY_TIME_ON_REPLAY = "delayTimeOnReplay"
+        const val INTENT_FILENAME = "filename"
+        const val INTENT_STATIC_LOCATION = "location"
+
+        val STATIC_LOCATIONS = hashMapOf(
+                "Berlin" to mapOf("latitude" to 52.5310158, "longitude" to 13.3842838),
+                "San Francisco" to mapOf("latitude" to 37.7873055, "longitude" to -122.4092979)
+        )
+
         private const val NOTIFICATION_CHANNEL_ID_DEFAULT = "default"
         private val LOG = PlaybackService::class.java.simpleName
         private const val NOTIFICATION = 1
-        const val CONTINUOUS = true
-        const val RUNNING = 0
-        const val STOPPED = 1
         private const val PROVIDER_NAME = LocationManager.GPS_PROVIDER
-        const val INTENT_DELAY_TIME_ON_REPLAY = "delayTimeOnReplay"
-        const val INTENT_FILENAME = "filename"
     }
 }
