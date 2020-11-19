@@ -265,13 +265,15 @@ class PlaybackService : Service(), GpxSaxParserListener {
 
         // Calculate the delay
         if (item.time != null) {
-            val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
             try {
-                val gpsDate = format.parse(item.time)
+                val gpsDate = LONG_DATE_FORMAT.parse(item.time)
                 gpsPointTime = gpsDate.time
             } catch (e: ParseException) {
+                val gpsDate = LESS_LONG_DATE_FORMAT.parse(item.time)
+                gpsPointTime = gpsDate.time
                 Log.e(LOG, "Unable to parse time:" + item.time)
             }
+
             if (firstGpsTime == 0L) firstGpsTime = gpsPointTime
             if (startTimeOffset == 0L) startTimeOffset = System.currentTimeMillis()
             delay = gpsPointTime - firstGpsTime + startTimeOffset
@@ -365,11 +367,13 @@ class PlaybackService : Service(), GpxSaxParserListener {
         const val INTENT_FILENAME = "filename"
         const val INTENT_STATIC_LOCATION = "location"
 
-        val STATIC_LOCATIONS = hashMapOf(
+        private val STATIC_LOCATIONS = hashMapOf(
                 "Berlin" to mapOf("latitude" to 52.5310158, "longitude" to 13.3842838),
                 "San Francisco" to mapOf("latitude" to 37.7873055, "longitude" to -122.4092979)
         )
 
+        private val LONG_DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
+        private val LESS_LONG_DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
         private const val NOTIFICATION_CHANNEL_ID_DEFAULT = "default"
         private val LOG = PlaybackService::class.java.simpleName
         private const val NOTIFICATION = 1

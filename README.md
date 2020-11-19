@@ -27,19 +27,21 @@ Once all permissions to the app have been granted you can also run it headless.
 
 This can be used for automated tests.
 
-To replay a certain file:
+### Replay a GPX file
 
 ```shell
 adb shell am start-foreground-service -n com.twolinessoftware.android/.PlaybackService -e filename "/storage/emulated/10/file2.gpx" -e delayTimeOnReplay 0
 ```
 
-To jump to a certain static location:
+### Jump to a certain static location
+
+San Francisco:
 
 ```shell
 adb shell am start-foreground-service -n com.twolinessoftware.android/.PlaybackService -e location "'San Francisco'"
 ```
 
-or
+Berlin:
 
 ```shell
 adb shell am start-foreground-service -n com.twolinessoftware.android/.PlaybackService -e location "Berlin"
