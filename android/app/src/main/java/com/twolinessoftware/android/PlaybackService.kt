@@ -262,16 +262,21 @@ class PlaybackService : Service(), GpxSaxParserListener {
     override fun onGpxPoint(item: GpxTrackPoint) {
         var delay = System.currentTimeMillis() + 2000 // ms until the point should be displayed
         var gpsPointTime: Long = 0
+        var parsed = false
 
         // Calculate the delay
         if (item.time != null) {
-            try {
-                val gpsDate = LONG_DATE_FORMAT.parse(item.time)
-                gpsPointTime = gpsDate.time
-            } catch (e: ParseException) {
-                val gpsDate = LESS_LONG_DATE_FORMAT.parse(item.time)
-                gpsPointTime = gpsDate.time
+            for (i in 0..1) {
+                try {
+                    val gpsDate = DATE_FORMATTERS[i].parse(item.time)
+                    gpsPointTime = gpsDate.time
+                    parsed = true
+                } catch (e: ParseException) {
+                }
+            }
+            if (!parsed) {
                 Log.e(LOG, "Unable to parse time:" + item.time)
+                return
             }
 
             if (firstGpsTime == 0L) firstGpsTime = gpsPointTime
@@ -372,8 +377,10 @@ class PlaybackService : Service(), GpxSaxParserListener {
                 "San Francisco" to mapOf("latitude" to 37.7873055, "longitude" to -122.4092979)
         )
 
-        private val LONG_DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
-        private val LESS_LONG_DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
+        private val DATE_FORMATTERS = arrayOf(
+                SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US),
+                SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US),
+        )
         private const val NOTIFICATION_CHANNEL_ID_DEFAULT = "default"
         private val LOG = PlaybackService::class.java.simpleName
         private const val NOTIFICATION = 1
