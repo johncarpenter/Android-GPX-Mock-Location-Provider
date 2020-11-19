@@ -19,7 +19,14 @@
             </intent-filter>
         </activity>
 
-        <service android:name="PlaybackService"></service>
+        <service
+            android:name=".PlaybackService"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name=".PlaybackService"/>
+            </intent-filter>
+        </service>
 
         <uses-library android:name="android.test.runner" />
     </application>

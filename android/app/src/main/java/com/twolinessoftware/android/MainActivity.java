@@ -45,6 +45,8 @@ import android.os.RemoteException;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -146,7 +148,23 @@ public class MainActivity extends Activity implements GpsPlaybackListener {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 
-		mEditText = (EditText) findViewById(R.id.file_path);
+		mEditText = findViewById(R.id.file_path);
+		mEditText.addTextChangedListener(new TextWatcher() {
+			@Override
+			public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+			}
+
+			@Override
+			public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+			}
+
+			@Override
+			public void afterTextChanged(Editable editable) {
+				filepath = editable.toString();
+			}
+		});
 
 		TextView mLabelEditText = (TextView) findViewById(R.id.label_edit_text_delay);
 		mLabelEditText.setText("Input Playback Delay (milliseconds): ");
@@ -281,17 +299,9 @@ public class MainActivity extends Activity implements GpsPlaybackListener {
 			return;
 		}
 
-
-		try {
-			if (service != null) {
-				service.startService(filepath);
-			}
-
-		} catch (RemoteException e) {
-		}
-
 		Intent i = new Intent(getApplicationContext(), PlaybackService.class);
-		i.putExtra("delayTimeOnReplay", delayTimeOnReplay);
+		i.putExtra(PlaybackService.INTENT_FILENAME, filepath);
+		i.putExtra(PlaybackService.INTENT_DELAY_TIME_ON_REPLAY, delayTimeOnReplay);
 		startService(i);
 	}
 
