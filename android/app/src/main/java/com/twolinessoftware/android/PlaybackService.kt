@@ -43,7 +43,7 @@ import java.util.*
 import kotlin.math.atan2
 
 class PlaybackService : Service(), GpxSaxParserListener {
-    private var mNM: NotificationManager? = null
+    private var notificationManager: NotificationManager? = null
     private val pointList = ArrayList<GpxTrackPoint>()
     private var lastPoint: GpxTrackPoint? = null
     private val mBinder: IPlaybackService.Stub = object : IPlaybackService.Stub() {
@@ -54,8 +54,8 @@ class PlaybackService : Service(), GpxSaxParserListener {
 
         @Throws(RemoteException::class)
         override fun stopService() {
-            mLocationManager!!.removeTestProvider(PROVIDER_NAME)
-            queue!!.reset()
+            mLocationManager?.removeTestProvider(PROVIDER_NAME)
+            queue?.reset()
             broadcastStateChange(STOPPED)
             cancelExistingTaskIfNecessary()
             onGpsPlaybackStopped()
@@ -79,7 +79,7 @@ class PlaybackService : Service(), GpxSaxParserListener {
     }
 
     override fun onCreate() {
-        mNM = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         mLocationManager = getSystemService(LOCATION_SERVICE) as LocationManager
         queue = SendLocationWorkerQueue()
         broadcastStateChange(STOPPED)
@@ -148,12 +148,10 @@ class PlaybackService : Service(), GpxSaxParserListener {
     }
 
     private fun cancelExistingTaskIfNecessary() {
-        if (task != null) {
-            try {
-                task!!.cancel(true)
-            } catch (e: Exception) {
-                Log.e(LOG, "Unable to cancel playback task. May already be stopped")
-            }
+        try {
+            task?.cancel(true)
+        } catch (e: Exception) {
+            Log.e(LOG, "Unable to cancel playback task. May already be stopped")
         }
     }
 
@@ -162,7 +160,7 @@ class PlaybackService : Service(), GpxSaxParserListener {
             broadcastStatus(GpsPlaybackBroadcastReceiver.Status.fileLoadStarted)
             cancelExistingTaskIfNecessary()
             task = ReadFileTask(file)
-            task!!.execute(null, null)
+            task?.execute(null, null)
 
             // Display a notification about us starting.  We put an icon in the status bar.
             showNotification()
@@ -178,40 +176,45 @@ class PlaybackService : Service(), GpxSaxParserListener {
         broadcastStateChange(STOPPED)
 
         // Cancel the persistent notification.
-        mNM!!.cancel(NOTIFICATION)
+        notificationManager?.cancel(NOTIFICATION)
         disableGpsProvider()
     }
 
     private fun disableGpsProvider() {
-        if (mLocationManager!!.getProvider(PROVIDER_NAME) != null) {
-            try {
-                mLocationManager!!.setTestProviderEnabled(PROVIDER_NAME, false)
-                mLocationManager!!.clearTestProviderEnabled(PROVIDER_NAME)
-                mLocationManager!!.clearTestProviderLocation(PROVIDER_NAME)
-                mLocationManager!!.removeTestProvider(PROVIDER_NAME)
-            } catch (e: IllegalArgumentException) {
-                Log.d("Main", "Error removing mock provider, probably a real one exist " +
-                        "with the same name.")
-            } catch (securityError: SecurityException) {
-                Toast.makeText(this, "Please grant permission to use mock location first. " +
-                        "This can be done in Development Settings or via adb.", Toast.LENGTH_LONG).show()
+        mLocationManager?.let {
+            if (it.getProvider(PROVIDER_NAME) != null) {
+                try {
+                    it.setTestProviderEnabled(PROVIDER_NAME, false)
+                    it.clearTestProviderEnabled(PROVIDER_NAME)
+                    it.clearTestProviderLocation(PROVIDER_NAME)
+                    it.removeTestProvider(PROVIDER_NAME)
+                } catch (e: IllegalArgumentException) {
+                    Log.d("Main", "Error removing mock provider, probably a real one exist " +
+                            "with the same name.")
+                } catch (securityError: SecurityException) {
+                    Toast.makeText(this, "Please grant permission to use mock location first. " +
+                            "This can be done in Development Settings or via adb.", Toast.LENGTH_LONG).show()
+                }
             }
         }
+
     }
 
     private fun setupTestProvider() {
         disableGpsProvider()
         if (canMockLocation(this)) {
-            mLocationManager!!.addTestProvider(PROVIDER_NAME, false,  //requiresNetwork,
-                    false,  // requiresSatellite,
-                    false,  // requiresCell,
-                    false,  // hasMonetaryCost,
-                    false,  // supportsAltitude,
-                    false,  // supportsSpeed, s
-                    false,  // supportsBearing,
-                    Criteria.POWER_LOW,  // powerRequirement
-                    Criteria.ACCURACY_FINE) // accuracy
-            mLocationManager!!.setTestProviderEnabled(PROVIDER_NAME, true)
+            mLocationManager?.let {
+                it.addTestProvider(PROVIDER_NAME, false,  //requiresNetwork,
+                        false,  // requiresSatellite,
+                        false,  // requiresCell,
+                        false,  // hasMonetaryCost,
+                        false,  // supportsAltitude,
+                        false,  // supportsSpeed, s
+                        false,  // supportsBearing,
+                        Criteria.POWER_LOW,  // powerRequirement
+                        Criteria.ACCURACY_FINE) // accuracy
+                it.setTestProviderEnabled(PROVIDER_NAME, true)
+            }
         }
     }
 
@@ -234,7 +237,7 @@ class PlaybackService : Service(), GpxSaxParserListener {
                 .build()
 
         // Send the notification.
-        mNM!!.notify(NOTIFICATION, notification)
+        notificationManager?.notify(NOTIFICATION, notification)
     }
 
     private fun loadFile(file: String): String? {
@@ -266,11 +269,12 @@ class PlaybackService : Service(), GpxSaxParserListener {
 
         // Calculate the delay
         if (item.time != null) {
-            for (i in 0..1) {
+            for (element in DATE_FORMATTERS) {
                 try {
-                    val gpsDate = DATE_FORMATTERS[i].parse(item.time)
+                    val gpsDate = element.parse(item.time)
                     gpsPointTime = gpsDate.time
                     parsed = true
+                    break
                 } catch (e: ParseException) {
                 }
             }
@@ -283,10 +287,10 @@ class PlaybackService : Service(), GpxSaxParserListener {
             if (startTimeOffset == 0L) startTimeOffset = System.currentTimeMillis()
             delay = gpsPointTime - firstGpsTime + startTimeOffset
         }
-        if (lastPoint != null) {
-            item.heading = calculateHeadingFromPreviousPoint(lastPoint!!, item)
-            item.speed = calculateSpeedFromPreviousPoint(lastPoint!!, item)
-        } else {
+        lastPoint?.also {
+            item.heading = calculateHeadingFromPreviousPoint(it, item)
+            item.speed = calculateSpeedFromPreviousPoint(it, item)
+        } ?: run {
             item.heading = 0.0
             item.speed = 15.0
         }
@@ -296,7 +300,7 @@ class PlaybackService : Service(), GpxSaxParserListener {
             if (delay > 0) {
                 Log.d(LOG, "Sending Point in:" + (delay - System.currentTimeMillis()) + "ms")
                 val worker = SendLocationWorker(mLocationManager, item, PROVIDER_NAME, delay)
-                queue!!.addToQueue(worker)
+                queue?.addToQueue(worker)
             } else {
                 Log.e(LOG, "Invalid Time at Point:$gpsPointTime delay from current time:$delay")
             }
