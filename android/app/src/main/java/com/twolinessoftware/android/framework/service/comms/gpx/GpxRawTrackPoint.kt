@@ -10,12 +10,12 @@ data class GpxRawTrackPoint(val lat: Double, val lon: Double ) {
 
     fun toGpxTrackPoint(): GpxTrackPoint {
         return GpxTrackPoint(lat, lon).apply {
-            ele = this@GpxRawTrackPoint.ele?.toFloat() ?: 0f
+            ele = this@GpxRawTrackPoint.ele?.toFloat()
             time = this@GpxRawTrackPoint.time
             fix = this@GpxRawTrackPoint.fix
             sat = this@GpxRawTrackPoint.sat
-            heading = this@GpxRawTrackPoint.heading?.toDouble() ?: 0.0
-            speed = this@GpxRawTrackPoint.speed?.toDouble() ?: 0.0
+            heading = this@GpxRawTrackPoint.heading?.toFloat()
+            speed = this@GpxRawTrackPoint.speed?.toFloat()
         }
     }
 }

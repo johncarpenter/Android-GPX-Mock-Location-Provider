@@ -111,7 +111,7 @@ class PlaybackService : Service(), GpxSaxParserListener {
                 var gpxPoint = GpxTrackPoint(location["latitude"] ?: 52.52, location["longitude"]
                         ?: 13.13).apply {
                     ele = 0f
-                    heading = 0.0
+                    heading = 0f
                 }
                 queue?.addToQueue(SendLocationWorker(mLocationManager, gpxPoint, PROVIDER_NAME,
                         0))
@@ -204,15 +204,15 @@ class PlaybackService : Service(), GpxSaxParserListener {
         disableGpsProvider()
         if (canMockLocation(this)) {
             mLocationManager?.let {
-                it.addTestProvider(PROVIDER_NAME, false,  //requiresNetwork,
-                        false,  // requiresSatellite,
-                        false,  // requiresCell,
-                        false,  // hasMonetaryCost,
-                        false,  // supportsAltitude,
-                        false,  // supportsSpeed, s
-                        false,  // supportsBearing,
-                        Criteria.POWER_LOW,  // powerRequirement
-                        Criteria.ACCURACY_FINE) // accuracy
+                it.addTestProvider(PROVIDER_NAME, false,
+                        false,
+                        false,
+                        false,
+                        true,
+                        true,
+                        true,
+                        Criteria.POWER_LOW,
+                        Criteria.ACCURACY_FINE)
                 it.setTestProviderEnabled(PROVIDER_NAME, true)
             }
         }
@@ -287,13 +287,9 @@ class PlaybackService : Service(), GpxSaxParserListener {
             if (startTimeOffset == 0L) startTimeOffset = System.currentTimeMillis()
             delay = gpsPointTime - firstGpsTime + startTimeOffset
         }
-        lastPoint?.also {
-            item.heading = calculateHeadingFromPreviousPoint(it, item)
-            item.speed = calculateSpeedFromPreviousPoint(it, item)
-        } ?: run {
-            item.heading = 0.0
-            item.speed = 15.0
-        }
+        item.heading ?: lastPoint?.run { calculateHeadingFromPreviousPoint(this, item) } ?: 0.0
+        item.speed ?: lastPoint?.run { calculateSpeedFromPreviousPoint(this, item) } ?: 15
+
         lastPoint = item
         pointList.add(item)
         if (state == RUNNING) {

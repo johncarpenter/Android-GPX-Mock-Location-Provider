@@ -17,10 +17,10 @@ package com.twolinessoftware.android.framework.service.comms.gpx
 
 
 data class GpxTrackPoint(val lat: Double, val lon: Double ) {
-    var ele = 0f
+    var ele: Float? = null
     var time: String? = null
     var fix: String? = null
     var sat: String? = null
-    var heading = 0.0
-    var speed = 0.0
+    var heading: Float? = null
+    var speed: Float? = null
 }

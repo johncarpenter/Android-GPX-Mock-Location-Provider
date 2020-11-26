@@ -57,6 +57,8 @@ class GpxSaxParser(private val listener: GpxSaxParserListener?) : Parser() {
                     else if (currentTag.equals("time", ignoreCase = true)) { this.time = (this.time ?: "") + value }
                     else if (currentTag.equals("sat", ignoreCase = true)) { this.sat = (this.sat ?: "") +  value }
                     else if (currentTag.equals("fix", ignoreCase = true)) { this.fix = (this.fix ?: "") + value }
+                    else if (currentTag.equals("course", ignoreCase = true)) { this.heading = (this.heading ?: "") + value }
+                    else if (currentTag.equals("speed", ignoreCase = true)) { this.speed = (this.speed ?: "") + value }
                 }
             }
 
