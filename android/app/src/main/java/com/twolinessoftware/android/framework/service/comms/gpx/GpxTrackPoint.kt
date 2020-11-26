@@ -15,19 +15,12 @@
  */
 package com.twolinessoftware.android.framework.service.comms.gpx
 
-import java.io.Serializable
 
-class GpxTrackPoint : Serializable {
+data class GpxTrackPoint(val lat: Double, val lon: Double ) {
     var ele = 0f
     var time: String? = null
     var fix: String? = null
     var sat: String? = null
-    var lat = 0.0
-    var lon = 0.0
     var heading = 0.0
     var speed = 0.0
-
-    companion object {
-        private const val serialVersionUID = -4894963006110633397L
-    }
 }

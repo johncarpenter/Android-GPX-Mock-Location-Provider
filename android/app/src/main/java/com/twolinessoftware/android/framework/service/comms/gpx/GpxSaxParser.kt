@@ -41,7 +41,7 @@ class GpxSaxParser(private val listener: GpxSaxParserListener?) : Parser() {
     }
 
     internal inner class GpxHandler : DefaultHandler() {
-        private var point: GpxTrackPoint? = null
+        private var point: GpxRawTrackPoint? = null
         private var currentTag: String? = null
         @Throws(SAXException::class)
         override fun startDocument() {
@@ -53,10 +53,10 @@ class GpxSaxParser(private val listener: GpxSaxParserListener?) : Parser() {
             point?.apply {
                 if (currentTag != null) {
                     val value = String(ch, start, length)
-                    if (currentTag.equals("ele", ignoreCase = true)) this.ele = value.toFloat()
-                    else if (currentTag.equals("time", ignoreCase = true)) this.time = value
-                    else if (currentTag.equals("sat", ignoreCase = true)) this.sat = value
-                    else if (currentTag.equals("fix", ignoreCase = true)) this.fix = value
+                    if (currentTag.equals("ele", ignoreCase = true)) { this.ele = (this.ele ?: "") + value }
+                    else if (currentTag.equals("time", ignoreCase = true)) { this.time = (this.time ?: "") + value }
+                    else if (currentTag.equals("sat", ignoreCase = true)) { this.sat = (this.sat ?: "") +  value }
+                    else if (currentTag.equals("fix", ignoreCase = true)) { this.fix = (this.fix ?: "") + value }
                 }
             }
 
@@ -66,11 +66,8 @@ class GpxSaxParser(private val listener: GpxSaxParserListener?) : Parser() {
         override fun startElement(uri: String, localName: String, qName: String,
                                   attributes: Attributes) {
             if (qName.equals("trkpt", ignoreCase = true)) {
-                point = GpxTrackPoint().apply {
-                    lat = attributes.getValue("lat").toFloat().toDouble()
-                    lon = attributes.getValue("lon").toFloat().toDouble()
-                }
-
+                point = GpxRawTrackPoint(attributes.getValue("lat").toFloat().toDouble(),
+                        attributes.getValue("lon").toFloat().toDouble())
             }
             currentTag = qName
         }
@@ -80,7 +77,7 @@ class GpxSaxParser(private val listener: GpxSaxParserListener?) : Parser() {
             currentTag = null
             point?.let {
                 if (qName.equals("trkpt", ignoreCase = true)) {
-                    listener?.onGpxPoint(it)
+                    listener?.onGpxPoint(it.toGpxTrackPoint())
                 }
             }
         }

@@ -108,11 +108,11 @@ class PlaybackService : Service(), GpxSaxParserListener {
                 location = STATIC_LOCATIONS["Berlin"]
             }
             location?.let {
-                var gpxPoint = GpxTrackPoint()
-                gpxPoint.ele = 0f
-                gpxPoint.heading = 0.0
-                gpxPoint.lat = location["latitude"] ?: 52.52
-                gpxPoint.lon = location["longitude"] ?: 13.13
+                var gpxPoint = GpxTrackPoint(location["latitude"] ?: 52.52, location["longitude"]
+                        ?: 13.13).apply {
+                    ele = 0f
+                    heading = 0.0
+                }
                 queue?.addToQueue(SendLocationWorker(mLocationManager, gpxPoint, PROVIDER_NAME,
                         0))
                 queue?.start(0)
