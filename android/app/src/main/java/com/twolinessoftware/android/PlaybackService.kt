@@ -167,7 +167,7 @@ class PlaybackService : Service(), GpxSaxParserListener {
         }
     }
 
-    private fun queueGpxPositions(xml: String?) {
+    private fun queueGpxPositions(xml: String) {
         val parser = GpxSaxParser(this)
         parser.parse(xml)
     }
@@ -258,7 +258,7 @@ class PlaybackService : Service(), GpxSaxParserListener {
         return null
     }
 
-    override fun onGpxError(message: String) {
+    override fun onGpxError(message: String?) {
         broadcastError(message)
     }
 
@@ -307,6 +307,14 @@ class PlaybackService : Service(), GpxSaxParserListener {
         }
     }
 
+    override fun onGpxStart() {
+        Log.d(LOG, "Parsing GPX started.")
+    }
+
+    override fun onGpxEnd() {
+        Log.d(LOG, "Parsing GPX completed.")
+    }
+
     private fun calculateHeadingFromPreviousPoint(currentPoint: GpxTrackPoint, lastPoint: GpxTrackPoint): Double {
         val angleBetweenPoints = atan2(lastPoint.lon - currentPoint.lon, lastPoint.lat - currentPoint.lat)
         return Math.toDegrees(angleBetweenPoints)
@@ -318,21 +326,13 @@ class PlaybackService : Service(), GpxSaxParserListener {
         return startCoordinate.distance(endCoordinate) * 100000
     }
 
-    override fun onGpxStart() {
-        // Start Parsing
-    }
-
-    override fun onGpxEnd() {
-        // End Parsing
-    }
-
     private fun broadcastStatus(status: GpsPlaybackBroadcastReceiver.Status) {
         val i = Intent(GpsPlaybackBroadcastReceiver.INTENT_BROADCAST)
         i.putExtra(GpsPlaybackBroadcastReceiver.INTENT_STATUS, status.toString())
         sendBroadcast(i)
     }
 
-    private fun broadcastError(message: String) {
+    private fun broadcastError(message: String?) {
         val i = Intent(GpsPlaybackBroadcastReceiver.INTENT_BROADCAST)
         i.putExtra(GpsPlaybackBroadcastReceiver.INTENT_STATUS, GpsPlaybackBroadcastReceiver.Status.fileError.toString())
         i.putExtra(GpsPlaybackBroadcastReceiver.INTENT_STATE, state)
@@ -356,9 +356,10 @@ class PlaybackService : Service(), GpxSaxParserListener {
             // Reset the existing values
             firstGpsTime = 0
             startTimeOffset = 0
-            val xml = loadFile(file)
+            loadFile(file)?.let {
+                queueGpxPositions(it)
+            }
             publishProgress(1)
-            queueGpxPositions(xml)
             return null
         }
 

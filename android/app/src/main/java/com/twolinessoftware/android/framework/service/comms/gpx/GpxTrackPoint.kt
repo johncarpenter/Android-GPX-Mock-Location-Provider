@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.twolinessoftware.android.framework.service.comms;
+package com.twolinessoftware.android.framework.service.comms.gpx
 
-public abstract class Worker implements Runnable {
+import java.io.Serializable
 
-	private Parser parser;
+class GpxTrackPoint : Serializable {
+    var ele = 0f
+    var time: String? = null
+    var fix: String? = null
+    var sat: String? = null
+    var lat = 0.0
+    var lon = 0.0
+    var heading = 0.0
+    var speed = 0.0
 
-	public Parser getParser() {
-		return parser;
-	}
-
-	public void setParser(Parser parser) {
-		this.parser = parser;
-	}
-
+    companion object {
+        private const val serialVersionUID = -4894963006110633397L
+    }
 }
