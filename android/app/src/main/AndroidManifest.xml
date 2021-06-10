@@ -29,4 +29,4 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"></uses-permission>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"></uses-permission>
     <uses-permission android:name="android.permission.SET_DEBUG_APP"></uses-permission>
-</manifest> 
+</manifest>
