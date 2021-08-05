@@ -54,7 +54,6 @@ class PlaybackService : Service(), GpxSaxParserListener {
 
         @Throws(RemoteException::class)
         override fun stopService() {
-            mLocationManager?.removeTestProvider(PROVIDER_NAME)
             queue?.reset()
             broadcastStateChange(STOPPED)
             cancelExistingTaskIfNecessary()
@@ -94,12 +93,12 @@ class PlaybackService : Service(), GpxSaxParserListener {
                     .setContentText("").build()
             startForeground(1, notification)
         }
-        setupTestProvider()
-        processing = false
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         Log.d(LOG, "Starting Playback Service")
+        setupTestProvider()
+        processing = false
 
         val staticLocation = intent.getStringExtra(INTENT_STATIC_LOCATION)
         if (staticLocation != null) {
