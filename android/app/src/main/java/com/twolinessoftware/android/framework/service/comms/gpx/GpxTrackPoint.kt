@@ -13,18 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.twolinessoftware.android.framework.service.comms;
+package com.twolinessoftware.android.framework.service.comms.gpx
 
-public abstract class Worker implements Runnable {
 
-	private Parser parser;
-
-	public Parser getParser() {
-		return parser;
-	}
-
-	public void setParser(Parser parser) {
-		this.parser = parser;
-	}
-
+data class GpxTrackPoint(val lat: Double, val lon: Double ) {
+    var ele: Float? = null
+    var time: String? = null
+    var fix: String? = null
+    var sat: String? = null
+    var heading: Float? = null
+    var speed: Float? = null
 }

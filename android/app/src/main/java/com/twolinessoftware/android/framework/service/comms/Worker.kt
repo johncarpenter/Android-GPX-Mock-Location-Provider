@@ -13,16 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.twolinessoftware.android.framework.service.comms.gpx;
+package com.twolinessoftware.android.framework.service.comms
 
-public interface GpxSaxParserListener {
-
-	void onGpxPoint(GpxTrackPoint item);
-
-	void onGpxError(String message);
-
-	void onGpxStart();
-
-	void onGpxEnd();
-
+abstract class Worker : Runnable {
+    var parser: Parser? = null
 }

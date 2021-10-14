@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011 2linessoftware.com
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -48,8 +48,8 @@ public class SendLocationWorkerQueue {
 
     public synchronized void stop() {
         /*
-		 * synchronized(lock){ lock.notify(); }
-		 */
+         * synchronized(lock){ lock.notify(); }
+         */
         running = false;
     }
 
@@ -85,10 +85,19 @@ public class SendLocationWorkerQueue {
                 if (queue.size() > 0) {
 
                     SendLocationWorker worker = queue.pop();
+                    long delay = TIME_BETWEEN_SENDS;
+                    if (TIME_BETWEEN_SENDS == 0) {
+                        long delayFromNow = worker.getSendTime() - System.currentTimeMillis();
+                        if (delayFromNow > 0) {
+                            delay = delayFromNow;
+                        }
+                    }
 
                     synchronized (lock) {
                         try {
-                            lock.wait(TIME_BETWEEN_SENDS);
+                            if (delay > 0) {
+                                lock.wait(delay);
+                            }
 
                             Logger.i("SendLocationWorkerQueue.running - TIME_BETWEEN_SENDS : " + TIME_BETWEEN_SENDS, " - sent at time : " + System.currentTimeMillis());
                         } catch (InterruptedException e) {

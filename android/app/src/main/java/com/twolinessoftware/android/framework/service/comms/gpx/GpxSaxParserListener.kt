@@ -13,25 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.twolinessoftware.android.framework.service.comms.gpx;
+package com.twolinessoftware.android.framework.service.comms.gpx
 
-import java.io.Serializable;
-import java.util.ArrayList;
-
-public class GpxTrackSegments implements Serializable {
-
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -2136941679164652258L;
-	private ArrayList<GpxTrackSegment> trackSegments = new ArrayList<GpxTrackSegment>();
-
-	public void setTrackSegments(ArrayList<GpxTrackSegment> trackSegments) {
-		this.trackSegments = trackSegments;
-	}
-
-	public ArrayList<GpxTrackSegment> getTrackSegments() {
-		return trackSegments;
-	}
-
+interface GpxSaxParserListener {
+    fun onGpxPoint(item: GpxTrackPoint)
+    fun onGpxError(message: String?)
+    fun onGpxStart()
+    fun onGpxEnd()
 }
